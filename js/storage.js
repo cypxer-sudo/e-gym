@@ -1,9 +1,30 @@
-// E-GYM LocalStorage State Management
-// Handles persistence, state mutations, and backup export/import
+// E-GYM Hybrid State Management (Cloudflare Edge D1 + LocalStorage Cache)
+// Automatically syncs with Cloudflare Pages Functions (/api/state) with instant offline cache.
 
-const STORAGE_KEY = "EGYM_MEMBER_STATE_V1";
+const STORAGE_KEY = "EGYM_MEMBER_STATE_V2";
 
 class StorageManager {
+  static isCloudflareConnected = false;
+
+  static async initCloudSync() {
+    try {
+      const resp = await fetch("/api/state");
+      if (resp.ok) {
+        const cloudData = await resp.json();
+        if (cloudData && cloudData.profile) {
+          console.log("[E-GYM Cloud] Loaded state from Cloudflare D1.");
+          this.saveLocalState(cloudData);
+          this.isCloudflareConnected = true;
+          return cloudData;
+        }
+      }
+    } catch (e) {
+      // Local development or running via file://
+      console.log("[E-GYM Local] Running in local offline-first mode.");
+    }
+    return this.getState();
+  }
+
   static getState() {
     try {
       const data = localStorage.getItem(STORAGE_KEY);
@@ -13,18 +34,34 @@ class StorageManager {
     } catch (e) {
       console.error("Failed to read from localStorage:", e);
     }
-    // Return deep copy of default state
     const defaultState = JSON.parse(JSON.stringify(INITIAL_MEMBER_STATE));
-    this.saveState(defaultState);
+    this.saveLocalState(defaultState);
     return defaultState;
   }
 
-  static saveState(state) {
+  static saveLocalState(state) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
       console.error("Failed to save state to localStorage:", e);
     }
+  }
+
+  static async syncToCloud(state) {
+    this.saveLocalState(state);
+    try {
+      await fetch("/api/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state)
+      });
+    } catch (e) {
+      // Offline or local
+    }
+  }
+
+  static saveState(state) {
+    this.syncToCloud(state);
   }
 
   static updateTodayObjective(objectiveId, completed) {
@@ -35,9 +72,8 @@ class StorageManager {
       if (completed) {
         state.stats.totalObjectivesDone += 1;
         state.stats.unrealPoints += 25;
-        // bump radar dimension if matches
-        if (obj.dimension && state.dimensionsRadar[obj.dimension]) {
-          state.dimensionsRadar[obj.dimension] = Math.min(100, state.dimensionsRadar[obj.dimension] + 1);
+        if (obj.dimension && state.dimensionsRadar[obj.dimension] !== undefined) {
+          state.dimensionsRadar[obj.dimension] = Math.min(100, state.dimensionsRadar[obj.dimension] + 2);
         }
       } else {
         state.stats.totalObjectivesDone = Math.max(0, state.stats.totalObjectivesDone - 1);
@@ -67,7 +103,7 @@ class StorageManager {
     const state = this.getState();
     const existing = state.enrolledChallenges.find(c => c.challengeId === challengeId);
     if (existing) {
-      return { success: false, message: "Already enrolled in this challenge." };
+      return { success: false, message: "Already enrolled in this protocol." };
     }
     const challenge = EGYM_DATA.challenges.find(c => c.id === challengeId);
     if (!challenge) {
@@ -84,7 +120,7 @@ class StorageManager {
     };
     state.enrolledChallenges.push(newEnrollment);
 
-    // Add challenge's daily objectives to today's objectives
+    // Add challenge objectives to today's objectives
     if (challenge.dailyObjectives && challenge.dailyObjectives.length > 0) {
       challenge.dailyObjectives.forEach(dObj => {
         state.todayObjectives.push({
@@ -116,7 +152,6 @@ class StorageManager {
       loggedAt: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
     };
 
-    // Increment day if not checked in today previously
     enrollment.currentDay = Math.min(enrollment.currentDay + 1, 100);
     state.stats.currentStreak += 1;
     if (state.stats.currentStreak > state.stats.longestStreak) {
@@ -137,7 +172,7 @@ class StorageManager {
     };
     state.readingLog.unshift(logItem);
     state.stats.unrealPoints += 30;
-    state.dimensionsRadar.intellectual = Math.min(100, state.dimensionsRadar.intellectual + 2);
+    state.dimensionsRadar.intellectual = Math.min(100, state.dimensionsRadar.intellectual + 3);
     this.saveState(state);
     return state;
   }
@@ -151,7 +186,7 @@ class StorageManager {
     };
     state.workoutLog.unshift(workoutItem);
     state.stats.unrealPoints += 40;
-    state.dimensionsRadar.physical = Math.min(100, state.dimensionsRadar.physical + 3);
+    state.dimensionsRadar.physical = Math.min(100, state.dimensionsRadar.physical + 4);
     this.saveState(state);
     return state;
   }
@@ -168,7 +203,7 @@ class StorageManager {
     } else {
       state.writingDrafts.unshift({
         id: "wd-" + Date.now(),
-        title: title || "Untitled Draft",
+        title: title || "Untitled Synthesis",
         content,
         wordCount,
         updatedAt: new Date().toISOString().split("T")[0]
@@ -176,7 +211,7 @@ class StorageManager {
     }
 
     state.stats.unrealPoints += 20;
-    state.dimensionsRadar.creative = Math.min(100, state.dimensionsRadar.creative + 2);
+    state.dimensionsRadar.creative = Math.min(100, state.dimensionsRadar.creative + 3);
     this.saveState(state);
     return state;
   }
@@ -188,9 +223,12 @@ class StorageManager {
     return state;
   }
 
-  static resetToDefault() {
+  static async resetToDefault() {
     const defaultState = JSON.parse(JSON.stringify(INITIAL_MEMBER_STATE));
-    this.saveState(defaultState);
+    this.saveLocalState(defaultState);
+    try {
+      await fetch("/api/reset", { method: "POST" });
+    } catch (e) {}
     return defaultState;
   }
 
@@ -206,7 +244,7 @@ class StorageManager {
   static importBackup(jsonString) {
     try {
       const parsed = JSON.parse(jsonString);
-      if (parsed.profile && parsed.enrolledChallenges) {
+      if (parsed.profile && parsed.dimensionsRadar) {
         this.saveState(parsed);
         return { success: true };
       }

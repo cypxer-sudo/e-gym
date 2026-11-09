@@ -17,13 +17,21 @@ const App = {
   timerInitialSeconds: 25 * 60,
   timerRunning: false,
 
-  init() {
+  async init() {
     this.state = StorageManager.getState();
     this.setupNavigation();
     this.setupAudioToggle();
     this.setupFocusTimer();
     this.renderAll();
     this.bindGlobalEvents();
+
+    try {
+      const cloudState = await StorageManager.initCloudSync();
+      if (cloudState) {
+        this.state = cloudState;
+        this.renderAll();
+      }
+    } catch (e) {}
   },
 
   renderAll() {
@@ -1030,9 +1038,9 @@ const App = {
     reader.readAsText(file);
   },
 
-  resetAllData() {
+  async resetAllData() {
     if (confirm("Are you sure you want to reset all progress to the default starting blueprint?")) {
-      this.state = StorageManager.resetToDefault();
+      this.state = await StorageManager.resetToDefault();
       SoundFX.playClick();
       this.renderAll();
       this.closeModal("settings-modal");

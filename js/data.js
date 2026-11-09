@@ -320,111 +320,45 @@ const EGYM_DATA = {
   ]
 };
 
-// Initial state for new members
+// Clean Reset State - Zeroed baseline ready for real production usage
 const INITIAL_MEMBER_STATE = {
   profile: {
-    name: "Alex Vance",
-    handle: "@vance_builds",
-    title: "Vanguard Initiate",
-    tier: "Member",
+    name: "New Member",
+    handle: "@initiate",
+    title: "Candidate",
+    tier: "Explorer",
     memberSince: "Nov 2026",
-    bio: "Training every dimension. Focusing on deliberate execution, physical strength, and philosophical clarity.",
+    bio: "Ready to train every dimension. Setting initial benchmarks.",
     avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80"
   },
   stats: {
-    currentStreak: 12,
-    longestStreak: 18,
-    completionRate: 88,
-    totalObjectivesDone: 142,
-    hoursInvested: 64,
-    unrealPoints: 1250
+    currentStreak: 0,
+    longestStreak: 0,
+    completionRate: 0,
+    totalObjectivesDone: 0,
+    hoursInvested: 0,
+    unrealPoints: 0
   },
   dimensionsRadar: {
-    physical: 75,
-    intellectual: 85,
-    emotional: 60,
-    psychological: 80,
-    social: 55,
-    financial: 70,
-    professional: 80,
-    creative: 65
+    physical: 50,
+    intellectual: 50,
+    emotional: 50,
+    psychological: 50,
+    social: 50,
+    financial: 50,
+    professional: 50,
+    creative: 50
   },
-  enrolledChallenges: [
-    {
-      challengeId: "discipline-75",
-      currentDay: 13,
-      startedAt: "2026-10-28",
-      status: "active", // active | completed
-      checkIns: {
-        "2026-11-09": { completed: false, note: "", reflection: "" },
-        "2026-11-08": { completed: true, note: "Solid 45m kettlebell session + 25m Marcus Aurelius reading.", reflection: "Felt strong even with morning rain." },
-        "2026-11-07": { completed: true, note: "Zone 2 run 5km, deep work session finished on time.", reflection: "Energy remained steady throughout." }
-      }
-    },
-    {
-      challengeId: "reading-21",
-      currentDay: 8,
-      startedAt: "2026-11-02",
-      status: "active",
-      checkIns: {
-        "2026-11-09": { completed: true, note: "Read Chapter 4 of Atomic Habits. Focused on environmental design.", reflection: "Making the cue obvious is 80% of the game." }
-      }
-    }
-  ],
+  enrolledChallenges: [],
   todayObjectives: [
-    { id: "today-1", title: "45-min Structured Movement / Strength session", dimension: "physical", challengeId: "discipline-75", completed: false, timeEst: "45m" },
-    { id: "today-2", title: "20-min Reading: Chapter 5 Atomic Habits", dimension: "intellectual", challengeId: "discipline-75", completed: true, timeEst: "20m" },
-    { id: "today-3", title: "Execute #1 priority deep work milestone (Product Spec)", dimension: "professional", challengeId: "discipline-75", completed: false, timeEst: "90m" },
-    { id: "today-4", title: "Capture 1 key insight in Reading Academy Journal", dimension: "intellectual", challengeId: "reading-21", completed: true, timeEst: "5m" },
-    { id: "today-5", title: "Digital boundary shutdown at 21:00", dimension: "psychological", challengeId: "discipline-75", completed: false, timeEst: "10m" }
+    { id: "starter-1", title: "Enroll in your first flagship challenge in the Challenge Arena", dimension: "execution", completed: false, timeEst: "5m" },
+    { id: "starter-2", title: "Explore the Reading Academy roadmaps in Departments", dimension: "intellectual", completed: false, timeEst: "10m" },
+    { id: "starter-3", title: "Set today's primary deep work block", dimension: "professional", completed: false, timeEst: "25m" }
   ],
-  readingLog: [
-    {
-      id: "rl-1",
-      bookTitle: "Atomic Habits",
-      author: "James Clear",
-      pagesRead: 32,
-      date: "2026-11-09",
-      insight: "You do not rise to the level of your goals. You fall to the level of your systems. Focus entirely on the immediate environment cues.",
-      actionItem: "Cleared phone off bedside table and placed kindle next to water bottle."
-    },
-    {
-      id: "rl-2",
-      bookTitle: "Meditations",
-      author: "Marcus Aurelius",
-      pagesRead: 18,
-      date: "2026-11-07",
-      insight: "The mind adapts and converts to its own purposes the obstacle to our acting. The impediment to action advances action.",
-      actionItem: "Reframe today's technical roadblocks as a stress test for patience."
-    }
-  ],
-  workoutLog: [
-    {
-      id: "wl-1",
-      date: "2026-11-08",
-      exerciseName: "Compound Push & Leg Density",
-      sets: [
-        { set: 1, reps: "15 pushups", weight: "BW" },
-        { set: 2, reps: "15 pushups", weight: "BW" },
-        { set: 3, reps: "20 bodyweight squats", weight: "BW" },
-        { set: 4, reps: "60s plank", weight: "BW" }
-      ],
-      rpe: 8,
-      notes: "Felt clean, strict cadence on eccentric tempo."
-    }
-  ],
-  writingDrafts: [
-    {
-      id: "wd-1",
-      title: "The Architecture of Follow-Through",
-      content: "Most people fail not because their ambitions are too grand, but because their day-to-day architecture leaks energy at every seam. Consistency is not an act of willpower; it is an act of engineering.\n\nWhen we remove friction from the actions that matter and introduce intentional friction to cheap dopamine, progress ceases to be an emotional struggle.",
-      wordCount: 56,
-      updatedAt: "2026-11-08"
-    }
-  ],
+  readingLog: [],
+  workoutLog: [],
+  writingDrafts: [],
   achievements: [
-    { id: "ach-1", title: "Genesis Commitment", desc: "Enrolled in your first flagship challenge.", unlockedAt: "Oct 2026", icon: "award" },
-    { id: "ach-2", title: "Ten-Day Citadel", desc: "Maintained a 10-day consecutive check-in streak.", unlockedAt: "Nov 2026", icon: "shield" },
-    { id: "ach-3", title: "Reader's Lens", desc: "Logged 5 verified insights in the Reading Academy.", unlockedAt: "Nov 2026", icon: "book" }
+    { id: "ach-1", title: "Genesis Candidate", desc: "Initiated your journey in the E-GYM institution.", unlockedAt: "Nov 2026", icon: "award" }
   ]
 };
