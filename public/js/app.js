@@ -39,12 +39,8 @@ const App = {
     this.renderAll();
     this.bindGlobalEvents();
 
-    // Check login state
-    if (!StorageManager.isLoggedIn()) {
-      this.switchView("login");
-    } else {
-      this.switchView("hq");
-    }
+    // Default to Personal HQ view
+    this.switchView("hq");
 
     try {
       const cloudState = await StorageManager.initCloudSync();
@@ -243,9 +239,7 @@ const App = {
   },
 
   switchView(viewName) {
-    if (!StorageManager.isLoggedIn() && viewName !== "login") {
-      viewName = "login";
-    }
+    if (!viewName) viewName = "hq";
     this.activeView = viewName;
     document.querySelectorAll(".nav-tab").forEach(tab => {
       tab.classList.toggle("active", tab.getAttribute("data-view") === viewName);
@@ -263,6 +257,12 @@ const App = {
       this.renderHQ();
     } else if (viewName === "ranks") {
       this.renderRanksView();
+    } else if (viewName === "challenges") {
+      this.renderChallengeArena();
+    } else if (viewName === "departments") {
+      this.renderDepartments();
+    } else if (viewName === "profile") {
+      this.renderProfile();
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
     SoundFX.playClick();
@@ -1694,9 +1694,6 @@ const App = {
     this.renderHQ();
     this.renderTopBar();
     alert("Evening reflection verified & recorded! +25 Unreal XP earned.");
-  },
-    this.renderHQ();
-    this.renderRadarChart();
   },
 
   // -------------------------------------------------------------
