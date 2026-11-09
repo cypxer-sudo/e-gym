@@ -1,6 +1,6 @@
 name = "e-gym"
+main = "_worker.js"
 compatibility_date = "2024-11-01"
-pages_build_output_dir = "."
 
 [assets]
 directory = "."
