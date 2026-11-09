@@ -17,6 +17,10 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
         Audio: On
       </button>
+      <button class="topbar-btn" onclick="App.openAdminModal()" title="Progression & Ledger Administration">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Admin Suite
+      </button>
       <button class="topbar-btn" onclick="App.openSettingsModal()" title="Data Backup & Reset">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         Vault & Data
@@ -48,6 +52,10 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
           Departments
         </button>
+        <button class="nav-tab" data-view="ranks">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+          Rank Hierarchy
+        </button>
         <button class="nav-tab" data-view="profile">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           Performance Record
@@ -57,7 +65,16 @@
 
       <div class="user-quick-profile" id="header-user-profile">
         <div id="auth-logged-in-wrap" style="display: flex; align-items: center; gap: 0.75rem;">
+          <span class="rank-header-badge" id="header-rank-badge" onclick="App.switchView('ranks')" title="View Current Rank & Progression">
+            <span class="rank-dot"></span>
+            <span id="header-rank-text">Recruit</span>
+          </span>
           <span class="tier-pill" id="header-tier-pill" onclick="App.switchView('membership')">Genesis Access</span>
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Member Avatar" class="avatar-circle" id="header-avatar" title="View Development Record" onclick="App.switchView('profile')">
+          <button class="topbar-btn" onclick="App.logout()" title="Sign Out of Session" style="color: var(--text-muted); font-size: 0.75rem;">
+            Sign Out
+          </button>
+        </div>
           <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Member Avatar" class="avatar-circle" id="header-avatar" title="View Development Record" onclick="App.switchView('profile')">
           <button class="topbar-btn" onclick="App.logout()" title="Sign Out of Session" style="color: var(--text-muted); font-size: 0.75rem;">
             Sign Out
@@ -172,6 +189,44 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             Deep Work Timer
           </button>
+        </div>
+      </div>
+
+      <!-- Rank Progression Banner -->
+      <div class="rank-banner-card" id="hq-rank-banner">
+        <div class="rank-banner-left">
+          <div class="rank-emblem-wrap" id="hq-rank-emblem">
+            <!-- Dynamic SVG Emblem injected via JS -->
+          </div>
+          <div class="rank-banner-info">
+            <div class="rank-badge-row">
+              <span class="rank-level-tag" id="hq-rank-level">LEVEL 1</span>
+              <span class="rank-status-tag">ACTIVE RANK</span>
+            </div>
+            <h2 class="rank-banner-title" id="hq-rank-title">Recruit</h2>
+            <p class="rank-banner-desc" id="hq-rank-desc">Starting rank for every new member. Begin your transformation.</p>
+          </div>
+        </div>
+
+        <div class="rank-banner-right">
+          <div class="rank-progress-header">
+            <div class="next-rank-label">
+              <span>PROGRESS TOWARDS <strong id="hq-next-rank-name">INITIATE</strong></span>
+            </div>
+            <span class="rank-progress-pct" id="hq-rank-progress-pct">0%</span>
+          </div>
+          <div class="rank-progress-track">
+            <div class="rank-progress-fill" id="hq-rank-progress-bar" style="width: 0%;"></div>
+          </div>
+          <div class="rank-criteria-summary" id="hq-rank-criteria-list">
+            <!-- Dynamic criteria chips injected via JS -->
+          </div>
+          <div class="rank-banner-actions">
+            <button class="btn btn-secondary rank-view-ladder-btn" onclick="App.switchView('ranks')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+              View Full Rank Hierarchy
+            </button>
+          </div>
         </div>
       </div>
 
@@ -581,6 +636,55 @@
     </section>
 
     <!-- ========================================== -->
+    <!-- VIEW: RANK & PROGRESSION HIERARCHY         -->
+    <!-- ========================================== -->
+    <section id="view-ranks" class="view-section">
+      <div class="hq-hero">
+        <div class="hq-welcome">
+          <h1>Institutional Rank Hierarchy</h1>
+          <p>“Ranks cannot be bought or granted. They are forged across every dimension.”</p>
+        </div>
+        <div class="hq-hero-actions">
+          <button class="btn btn-secondary" onclick="App.openAdminModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            Admin Suite
+          </button>
+        </div>
+      </div>
+
+      <!-- Current Standing Summary Card -->
+      <div class="rank-standing-card" id="ranks-standing-overview">
+        <!-- Rendered via JS -->
+      </div>
+
+      <!-- 9-Tier Rank Progression Ladder -->
+      <div class="section-head" style="margin-top: 2rem;">
+        <div class="section-title-wrap">
+          <h2 class="section-title">The Nine Institutional Ranks</h2>
+          <span class="badge-counter">Strict Multi-Vector Standard</span>
+        </div>
+        <p style="font-size:0.8rem; color:var(--text-secondary);">Advancement requires simultaneous fulfillment of all mandatory criteria. XP alone never determines rank.</p>
+      </div>
+
+      <div class="rank-hierarchy-ladder" id="rank-ladder-container">
+        <!-- 9 Rank cards injected via JS -->
+      </div>
+
+      <!-- Rank & Promotion History -->
+      <div class="card-section" style="margin-top: 2.5rem;">
+        <div class="section-head">
+          <div class="section-title-wrap">
+            <h2 class="section-title">Promotion History & Telemetry</h2>
+          </div>
+          <span class="badge-counter" id="rank-history-count-badge">1 Record</span>
+        </div>
+        <div class="rank-history-timeline" id="rank-history-timeline">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
     <!-- VIEW 5: MEMBERSHIP (TEMPORARILY DISABLED) -->
     <!-- ========================================== -->
     <section id="view-membership" class="view-section">
@@ -774,8 +878,104 @@
     </div>
   </div>
 
+  <!-- Modal: Promotion Ceremony Celebration -->
+  <div class="modal-overlay" id="promotion-modal">
+    <div class="modal-dialog celebration-modal-dialog">
+      <div class="celebration-rays"></div>
+      <div class="celebration-content">
+        <div class="promotion-crest-wrap" id="promo-modal-emblem">
+          <!-- Big SVG Emblem injected via JS -->
+        </div>
+        <div class="celebration-badge">HONOR CONFERRED • PROMOTION VERIFIED</div>
+        <h2 class="promotion-title" id="promo-modal-title">Adept</h2>
+        <div class="promotion-tagline" id="promo-modal-tagline">Demonstrates measurable progress and discipline across multiple dimensions.</div>
+        
+        <div class="promotion-criteria-proof">
+          <div class="promo-proof-title">STANDARDS FULFILLED ACROSS ALL DIMENSIONS</div>
+          <div class="promo-proof-grid" id="promo-modal-proof-grid">
+            <!-- Dynamic Criteria Proofs injected via JS -->
+          </div>
+        </div>
+
+        <div class="promotion-perks-box">
+          <div class="promo-perks-title">NEW INSTITUTIONAL PRIVILEGES UNLOCKED:</div>
+          <ul class="promo-perks-list" id="promo-modal-perks">
+            <!-- Dynamic Perks list injected via JS -->
+          </ul>
+        </div>
+
+        <button class="btn btn-primary btn-gold-radiant" onclick="App.closePromotionModal()" style="width: 100%; margin-top: 1.5rem; padding: 0.85rem; font-weight: 700; letter-spacing: 0.05em;">
+          Accept Promotion & Honor the Standard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Admin Management Suite -->
+  <div class="modal-overlay" id="admin-modal">
+    <div class="modal-dialog" style="max-width: 920px; max-height: 90vh; overflow-y: auto;">
+      <button class="modal-close-btn" onclick="App.closeModal('admin-modal')">&times;</button>
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.75rem;">
+        <div>
+          <span style="font-size:0.7rem; color:var(--text-gold); font-family:var(--font-mono); letter-spacing:0.1em; text-transform:uppercase;">E-GYM High Council</span>
+          <h3 style="font-family: var(--font-display); font-size: 1.5rem; color: #FFFFFF;">Admin Progression & Ledger Suite</h3>
+        </div>
+        <div style="display:flex; align-items:center; gap:0.5rem;">
+          <input type="password" id="admin-key-input" class="form-input" placeholder="Admin Secret Key" style="width: 160px; font-size: 0.75rem; padding: 0.35rem 0.6rem;" value="egym_admin_2026">
+          <button class="btn btn-secondary" onclick="App.refreshAdminSuite()" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Sync Data</button>
+        </div>
+      </div>
+
+      <!-- Admin Tabs -->
+      <div class="admin-tabs" style="display:flex; gap:0.5rem; margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:0.5rem;">
+        <button class="admin-tab-btn active" id="admin-tab-btn-ranks" onclick="App.switchAdminTab('ranks')">Rank Thresholds</button>
+        <button class="admin-tab-btn" id="admin-tab-btn-ledger" onclick="App.switchAdminTab('ledger')">XP Ledger & Audit Trail</button>
+        <button class="admin-tab-btn" id="admin-tab-btn-override" onclick="App.switchAdminTab('override')">Member Auditor & Simulator</button>
+      </div>
+
+      <!-- Tab 1: Rank Configuration -->
+      <div id="admin-tab-ranks" class="admin-tab-content">
+        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1rem;">Configure mandatory criteria thresholds for all 9 institutional ranks. Changes persist to Cloudflare Edge D1.</p>
+        <div id="admin-ranks-editor-list" style="display:flex; flex-direction:column; gap:1rem;">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Tab 2: XP Ledger -->
+      <div id="admin-tab-ledger" class="admin-tab-content hidden">
+        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1rem;">Immutable activity ledger. Verifies that all XP claims have unique idempotent keys to prevent duplicate claims.</p>
+        <div class="admin-ledger-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Tx ID</th>
+                <th>Source</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+              </tr>
+            </thead>
+            <tbody id="admin-ledger-tbody">
+              <!-- Injected via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Tab 3: Member Auditor & Simulator -->
+      <div id="admin-tab-override" class="admin-tab-content hidden">
+        <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:1rem;">Inspect current member's multi-dimension metrics, test evaluation engine, simulate rank promotions, or test celebration chimes.</p>
+        <div class="admin-simulator-box" id="admin-simulator-details">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="js/data.js"></script>
+  <script src="js/progression.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/app.js"></script>

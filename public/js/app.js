@@ -22,6 +22,20 @@ const App = {
     this.setupNavigation();
     this.setupAudioToggle();
     this.setupFocusTimer();
+
+    // Initialize Rank Progression Engine
+    if (typeof ProgressionEngine !== "undefined") {
+      try {
+        await ProgressionEngine.fetchRanks();
+        const promo = ProgressionEngine.checkAndApplyPromotion(this.state);
+        if (promo.promoted) {
+          StorageManager.saveState(this.state);
+        }
+      } catch (e) {
+        console.warn("[E-GYM App] Progression engine initialized with local presets.");
+      }
+    }
+
     this.renderAll();
     this.bindGlobalEvents();
 
@@ -45,6 +59,8 @@ const App = {
     this.state = StorageManager.getState();
     this.renderTopBar();
     this.renderHQ();
+    this.renderRankBanner();
+    this.renderRanksView();
     this.renderChallengeArena();
     this.renderDepartments();
     this.renderProfile();
@@ -62,6 +78,14 @@ const App = {
     if (loggedInWrap && loggedOutWrap) {
       loggedInWrap.classList.toggle("hidden", !isLoggedIn);
       loggedOutWrap.classList.toggle("hidden", isLoggedIn);
+    }
+
+    // Header Rank Pill
+    const rankBadge = document.getElementById("header-rank-badge");
+    const rankText = document.getElementById("header-rank-text");
+    if (rankText && typeof ProgressionEngine !== "undefined") {
+      const curRank = ProgressionEngine.getRankById(this.state.currentRankId || "recruit");
+      rankText.textContent = curRank.title;
     }
 
     const tierPill = document.getElementById("header-tier-pill");
@@ -327,15 +351,225 @@ const App = {
     const obj = this.state.todayObjectives.find(o => o.id === id);
     if (!obj) return;
     const newStatus = !obj.completed;
-    this.state = StorageManager.updateTodayObjective(id, newStatus);
+    const res = StorageManager.updateTodayObjective(id, newStatus);
+    this.state = res.state || res;
+
     if (newStatus) {
       SoundFX.playSuccess();
+      if (res.promoResult) {
+        this.showPromotionModal(res.promoResult);
+      }
     } else {
       SoundFX.playClick();
     }
     this.renderHQ();
+    this.renderRankBanner();
+    this.renderRanksView();
     this.renderProfile();
     this.renderRadarChart();
+  },
+
+  // -------------------------------------------------------------
+  // Rank Progression & Hierarchy Components
+  // -------------------------------------------------------------
+  renderRankBanner() {
+    if (typeof ProgressionEngine === "undefined") return;
+    const evaluation = ProgressionEngine.evaluate(this.state);
+    const { currentRank, nextRank, progressPct, criteriaList } = evaluation;
+
+    const emblemWrap = document.getElementById("hq-rank-emblem");
+    if (emblemWrap) {
+      emblemWrap.innerHTML = ProgressionEngine.getEmblemSVG(currentRank.id, 80);
+    }
+
+    const levelTag = document.getElementById("hq-rank-level");
+    if (levelTag) levelTag.textContent = `LEVEL ${currentRank.level}`;
+
+    const titleEl = document.getElementById("hq-rank-title");
+    if (titleEl) titleEl.textContent = currentRank.title;
+
+    const descEl = document.getElementById("hq-rank-desc");
+    if (descEl) descEl.textContent = currentRank.tagline;
+
+    const nextName = document.getElementById("hq-next-rank-name");
+    if (nextName) nextName.textContent = nextRank ? nextRank.title.toUpperCase() : "MAX LEVEL";
+
+    const pctEl = document.getElementById("hq-rank-progress-pct");
+    if (pctEl) pctEl.textContent = nextRank ? `${progressPct}%` : "100%";
+
+    const barEl = document.getElementById("hq-rank-progress-bar");
+    if (barEl) barEl.style.width = nextRank ? `${progressPct}%` : "100%";
+
+    const criteriaSummary = document.getElementById("hq-rank-criteria-list");
+    if (criteriaSummary) {
+      if (!nextRank) {
+        criteriaSummary.innerHTML = `<span class="criteria-chip met">⚡ Sovereign Apex Rank Attained</span>`;
+      } else {
+        criteriaSummary.innerHTML = criteriaList.map(c => `
+          <span class="criteria-chip ${c.met ? 'met' : 'unmet'}" title="${c.label}: ${c.current}/${c.target} ${c.unit}">
+            ${c.met 
+              ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>` 
+              : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+            }
+            <strong>${c.label}:</strong> ${c.current}/${c.target} ${c.unit}
+          </span>
+        `).join("");
+      }
+    }
+  },
+
+  renderRanksView() {
+    if (typeof ProgressionEngine === "undefined") return;
+    const ranks = ProgressionEngine.getRanks();
+    const evaluation = ProgressionEngine.evaluate(this.state);
+    const { currentRank, nextRank, progressPct } = evaluation;
+
+    // 1. Standing Overview Card
+    const standingCont = document.getElementById("ranks-standing-overview");
+    if (standingCont) {
+      standingCont.innerHTML = `
+        <div class="standing-overview-grid">
+          <div class="standing-emblem-large">
+            ${ProgressionEngine.getEmblemSVG(currentRank.id, 110)}
+          </div>
+          <div class="standing-info-col">
+            <div style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-gold); letter-spacing: 0.1em; text-transform: uppercase;">
+              MEMBER DOSSIER • LEVEL ${currentRank.level}
+            </div>
+            <h2>${this.escapeHTML(currentRank.title)}</h2>
+            <p>${this.escapeHTML(currentRank.tagline)}</p>
+            <div class="standing-metrics-pills">
+              <div class="standing-metric-pill">
+                <span class="lbl">Unreal XP</span>
+                <span class="val">${(this.state.stats.unrealPoints || 0).toLocaleString()}</span>
+              </div>
+              <div class="standing-metric-pill">
+                <span class="lbl">Streak</span>
+                <span class="val">${this.state.stats.currentStreak || 0} Days</span>
+              </div>
+              <div class="standing-metric-pill">
+                <span class="lbl">Tasks Done</span>
+                <span class="val">${this.state.stats.totalObjectivesDone || 0}</span>
+              </div>
+              <div class="standing-metric-pill">
+                <span class="lbl">Active Protocols</span>
+                <span class="val">${(this.state.enrolledChallenges || []).length}</span>
+              </div>
+            </div>
+          </div>
+          <div class="standing-progress-box">
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.5rem; font-size:0.75rem;">
+              <span style="color:var(--text-muted); text-transform:uppercase;">Next: ${nextRank ? nextRank.title : 'Apex'}</span>
+              <strong style="color:var(--text-gold); font-family:var(--font-mono);">${progressPct}%</strong>
+            </div>
+            <div class="rank-progress-track" style="margin-bottom:0.75rem;">
+              <div class="rank-progress-fill" style="width: ${progressPct}%;"></div>
+            </div>
+            <div style="font-size:0.72rem; color:var(--text-secondary); line-height:1.4;">
+              ${nextRank ? `Satisfy all mandatory criteria to unlock ${nextRank.title}.` : 'You stand at the absolute summit of E-GYM.'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. Ladder Container
+    const ladderCont = document.getElementById("rank-ladder-container");
+    if (ladderCont) {
+      ladderCont.innerHTML = ranks.map(rank => {
+        const isCurrent = rank.id === currentRank.id;
+        const isUnlocked = rank.level <= currentRank.level;
+        const cardClass = isCurrent ? "active-rank" : (isUnlocked ? "unlocked-rank" : "locked-rank");
+
+        // Format criteria display
+        const xpReq = rank.min_xp ? `${rank.min_xp.toLocaleString()} XP` : "0 XP";
+        const streakReq = rank.min_streak ? `${rank.min_streak} Days Streak` : "None";
+        const chalReq = rank.min_challenges ? `${rank.min_challenges} Protocol(s)` : "None";
+        const objReq = rank.min_objectives ? `${rank.min_objectives} Objectives` : "None";
+        const dimReq = rank.min_dimensions_count ? `${rank.min_dimensions_count} dims @ ${rank.min_dimension_score}%+` : "None";
+
+        // Criteria satisfaction status for current member
+        const userXP = this.state.stats.unrealPoints || 0;
+        const userStreak = Math.max(this.state.stats.currentStreak || 0, this.state.stats.longestStreak || 0);
+        const userObj = this.state.stats.totalObjectivesDone || 0;
+        const userChal = (this.state.enrolledChallenges || []).length;
+        const userRadarMet = rank.min_dimensions_count 
+          ? Object.values(this.state.dimensionsRadar || {}).filter(v => Number(v) >= (rank.min_dimension_score || 0)).length >= rank.min_dimensions_count
+          : true;
+
+        return `
+          <div class="rank-tier-card ${cardClass}">
+            <div class="rank-card-emblem">
+              ${ProgressionEngine.getEmblemSVG(rank.id, 64)}
+            </div>
+
+            <div class="rank-card-identity">
+              <span class="rank-card-level">LEVEL ${rank.level}</span>
+              <h3 class="rank-card-name">${this.escapeHTML(rank.title)}</h3>
+              <p class="rank-card-tagline">${this.escapeHTML(rank.tagline)}</p>
+            </div>
+
+            <div class="rank-card-criteria-box">
+              <div style="font-size:0.68rem; color:var(--text-gold); font-weight:700; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.25rem;">
+                Mandatory Thresholds
+              </div>
+              <div class="criteria-grid-mini">
+                <div class="criteria-item-mini ${userXP >= (rank.min_xp || 0) ? 'satisfied' : 'pending'}">
+                  <span>⚡</span> <span>${xpReq}</span>
+                </div>
+                <div class="criteria-item-mini ${userStreak >= (rank.min_streak || 0) ? 'satisfied' : 'pending'}">
+                  <span>🔥</span> <span>${streakReq}</span>
+                </div>
+                <div class="criteria-item-mini ${userObj >= (rank.min_objectives || 0) ? 'satisfied' : 'pending'}">
+                  <span>🎯</span> <span>${objReq}</span>
+                </div>
+                <div class="criteria-item-mini ${userChal >= (rank.min_challenges || 0) ? 'satisfied' : 'pending'}">
+                  <span>🛡️</span> <span>${chalReq}</span>
+                </div>
+                ${rank.min_dimensions_count ? `
+                  <div class="criteria-item-mini ${userRadarMet ? 'satisfied' : 'pending'}" style="grid-column: 1 / -1;">
+                    <span>📊</span> <span>Multi-Domain: ${dimReq}</span>
+                  </div>
+                ` : ''}
+              </div>
+            </div>
+
+            <div class="rank-card-perks">
+              <strong>Institutional Perks</strong>
+              <ul>
+                ${(rank.perks || []).map(p => `<li>${this.escapeHTML(p)}</li>`).join("")}
+              </ul>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    // 3. Promotion History
+    const historyCont = document.getElementById("rank-history-timeline");
+    const countBadge = document.getElementById("rank-history-count-badge");
+    const historyList = this.state.rankHistory || [];
+    if (countBadge) countBadge.textContent = `${historyList.length} Record${historyList.length === 1 ? '' : 's'}`;
+
+    if (historyCont) {
+      if (historyList.length === 0) {
+        historyCont.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem;">No historical promotion events recorded yet.</div>`;
+      } else {
+        historyCont.innerHTML = historyList.map(item => {
+          const rObj = ProgressionEngine.getRankById(item.rankId);
+          const dateStr = item.promotedAt ? new Date(item.promotedAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Initial';
+          return `
+            <div class="timeline-entry">
+              <div>
+                <div class="timeline-entry-title">Conferred: ${rObj ? rObj.title : item.rankId}</div>
+                <div class="timeline-entry-reason">${this.escapeHTML(item.triggerReason || 'Standard progression requirements fulfilled')}</div>
+              </div>
+              <div class="timeline-entry-date">${dateStr}</div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
   },
 
   // -------------------------------------------------------------
@@ -582,9 +816,15 @@ const App = {
       SoundFX.playSuccess();
       this.state = res.state;
       this.renderHQ();
+      this.renderRankBanner();
+      this.renderRanksView();
       this.renderChallengeArena();
       this.switchView("hq");
-      alert("Protocol Activated! Your daily objectives have been updated in your Personal HQ.");
+      if (res.promoResult) {
+        this.showPromotionModal(res.promoResult);
+      } else {
+        alert("Protocol Activated! Your daily objectives have been updated in your Personal HQ.");
+      }
     } else {
       alert(res.message);
     }
@@ -616,9 +856,15 @@ const App = {
       this.state = res.state;
       this.closeModal("checkin-modal");
       this.renderHQ();
+      this.renderRankBanner();
+      this.renderRanksView();
       this.renderProfile();
       this.renderRadarChart();
-      alert("Check-in logged successfully! +75 Unreal Points & streak updated.");
+      if (res.promoResult) {
+        this.showPromotionModal(res.promoResult);
+      } else {
+        alert("Check-in logged successfully! +75 Unreal Points & streak updated.");
+      }
     }
   },
 
@@ -687,7 +933,7 @@ const App = {
       return;
     }
 
-    this.state = StorageManager.addReadingLog({
+    const res = StorageManager.addReadingLog({
       bookTitle,
       author: "",
       pagesRead: parseInt(pages) || 15,
@@ -695,6 +941,7 @@ const App = {
       actionItem: action
     });
 
+    this.state = res.state || res;
     SoundFX.playSuccess();
     document.getElementById("reader-book-input").value = "";
     document.getElementById("reader-pages-input").value = "";
@@ -702,7 +949,10 @@ const App = {
     document.getElementById("reader-action-input").value = "";
     this.renderReadingAcademy();
     this.renderHQ();
+    this.renderRankBanner();
+    this.renderRanksView();
     this.renderRadarChart();
+    if (res.promoResult) this.showPromotionModal(res.promoResult);
   },
 
   renderFitnessDept() {
@@ -752,20 +1002,24 @@ const App = {
       return;
     }
 
-    this.state = StorageManager.addWorkoutLog({
+    const res = StorageManager.addWorkoutLog({
       exerciseName,
       sets: [{ reps: sets || "3 sets complete", weight: "Standard" }],
       rpe: 8,
       notes
     });
 
+    this.state = res.state || res;
     SoundFX.playSuccess();
     document.getElementById("workout-name-input").value = "";
     document.getElementById("workout-sets-input").value = "";
     document.getElementById("workout-notes-input").value = "";
     this.renderFitnessDept();
     this.renderHQ();
+    this.renderRankBanner();
+    this.renderRanksView();
     this.renderRadarChart();
+    if (res.promoResult) this.showPromotionModal(res.promoResult);
   },
 
   renderWritingStudio() {
@@ -832,12 +1086,19 @@ const App = {
       alert("Draft is empty.");
       return;
     }
-    this.state = StorageManager.saveWritingDraft(title, content);
+    const res = StorageManager.saveWritingDraft(title, content);
+    this.state = res.state || res;
     SoundFX.playSuccess();
     this.renderWritingStudio();
     this.renderHQ();
+    this.renderRankBanner();
+    this.renderRanksView();
     this.renderRadarChart();
-    alert("Draft saved to Writing Studio archive!");
+    if (res.promoResult) {
+      this.showPromotionModal(res.promoResult);
+    } else {
+      alert("Draft saved to Writing Studio archive!");
+    }
   },
 
   updateWordCount() {
@@ -1182,6 +1443,269 @@ const App = {
         }
       });
     });
+  },
+
+  // -------------------------------------------------------------
+  // Promotion Ceremony Celebration Modal
+  // -------------------------------------------------------------
+  showPromotionModal(newRank) {
+    if (!newRank) return;
+    const emblemCont = document.getElementById("promo-modal-emblem");
+    if (emblemCont) {
+      emblemCont.innerHTML = ProgressionEngine.getEmblemSVG(newRank.id, 130);
+    }
+
+    const titleEl = document.getElementById("promo-modal-title");
+    if (titleEl) titleEl.textContent = newRank.title;
+
+    const taglineEl = document.getElementById("promo-modal-tagline");
+    if (taglineEl) taglineEl.textContent = newRank.tagline;
+
+    const proofCont = document.getElementById("promo-modal-proof-grid");
+    if (proofCont) {
+      proofCont.innerHTML = `
+        <div class="promo-proof-item"><span>✓</span> <span>${(newRank.min_xp || 0).toLocaleString()} XP Verified</span></div>
+        <div class="promo-proof-item"><span>✓</span> <span>${newRank.min_streak || 0} Days Streak Satisfied</span></div>
+        <div class="promo-proof-item"><span>✓</span> <span>${newRank.min_objectives || 0} Objectives Executed</span></div>
+        <div class="promo-proof-item"><span>✓</span> <span>${newRank.min_dimensions_count || 0} Domains Balanced</span></div>
+      `;
+    }
+
+    const perksCont = document.getElementById("promo-modal-perks");
+    if (perksCont && newRank.perks) {
+      perksCont.innerHTML = newRank.perks.map(p => `<li>${this.escapeHTML(p)}</li>`).join("");
+    }
+
+    // Acoustic institutional celebration
+    SoundFX.playSuccess();
+    setTimeout(() => SoundFX.playGong(), 250);
+
+    this.openModal("promotion-modal");
+  },
+
+  closePromotionModal() {
+    this.closeModal("promotion-modal");
+    SoundFX.playClick();
+    this.renderAll();
+  },
+
+  // -------------------------------------------------------------
+  // Admin Management Suite
+  // -------------------------------------------------------------
+  openAdminModal() {
+    this.openModal("admin-modal");
+    this.renderAdminRanks();
+    this.renderAdminLedger();
+    this.renderAdminSimulator();
+  },
+
+  switchAdminTab(tabName) {
+    document.querySelectorAll(".admin-tab-btn").forEach(b => b.classList.remove("active"));
+    const btn = document.getElementById(`admin-tab-btn-${tabName}`);
+    if (btn) btn.classList.add("active");
+
+    document.querySelectorAll(".admin-tab-content").forEach(c => c.classList.add("hidden"));
+    const content = document.getElementById(`admin-tab-${tabName}`);
+    if (content) content.classList.remove("hidden");
+    SoundFX.playClick();
+  },
+
+  async refreshAdminSuite() {
+    const key = document.getElementById("admin-key-input")?.value || "egym_admin_2026";
+    const auditData = await StorageManager.fetchAdminAudit(key);
+    if (auditData) {
+      if (auditData.ranks) {
+        ProgressionEngine.cachedRanks = auditData.ranks;
+      }
+      alert(`Admin edge sync successful: ${auditData.members?.length || 0} members & ${auditData.recentLedger?.length || 0} ledger transactions loaded.`);
+      this.renderAdminRanks();
+      this.renderAdminLedger(auditData.recentLedger);
+      this.renderAdminSimulator();
+      this.renderAll();
+    } else {
+      alert("Failed to connect with Edge D1. Verify admin key or server state.");
+    }
+  },
+
+  renderAdminRanks() {
+    const cont = document.getElementById("admin-ranks-editor-list");
+    if (!cont) return;
+    const ranks = ProgressionEngine.getRanks();
+
+    cont.innerHTML = ranks.map(r => `
+      <div class="admin-rank-card" id="admin-card-${r.id}">
+        <div class="admin-rank-header">
+          <div style="display:flex; align-items:center; gap:0.75rem;">
+            <div style="width:36px; height:36px;">${ProgressionEngine.getEmblemSVG(r.id, 36)}</div>
+            <div>
+              <strong style="color:#FFFFFF; font-size:0.95rem;">${this.escapeHTML(r.title)}</strong>
+              <span style="font-family:var(--font-mono); font-size:0.7rem; color:var(--text-muted); margin-left:0.5rem;">ID: ${r.id} (Level ${r.level})</span>
+            </div>
+          </div>
+          <button class="btn btn-outline-gold" style="font-size:0.72rem; padding:0.3rem 0.75rem;" onclick="App.saveAdminRank('${r.id}')">Save Thresholds</button>
+        </div>
+        <div class="admin-rank-inputs-grid">
+          <div class="admin-input-group">
+            <label>Min Unreal XP</label>
+            <input type="number" id="adm-${r.id}-xp" value="${r.min_xp}">
+          </div>
+          <div class="admin-input-group">
+            <label>Min Streak (Days)</label>
+            <input type="number" id="adm-${r.id}-streak" value="${r.min_streak}">
+          </div>
+          <div class="admin-input-group">
+            <label>Min Protocols</label>
+            <input type="number" id="adm-${r.id}-challenges" value="${r.min_challenges}">
+          </div>
+          <div class="admin-input-group">
+            <label>Min Objectives Done</label>
+            <input type="number" id="adm-${r.id}-obj" value="${r.min_objectives}">
+          </div>
+          <div class="admin-input-group">
+            <label>Multi-Dims Count</label>
+            <input type="number" id="adm-${r.id}-dim-count" value="${r.min_dimensions_count}">
+          </div>
+          <div class="admin-input-group">
+            <label>Min Dim Score (%)</label>
+            <input type="number" id="adm-${r.id}-dim-score" value="${r.min_dimension_score}">
+          </div>
+          <div class="admin-input-group" style="grid-column: span 2;">
+            <label>Tagline</label>
+            <input type="text" id="adm-${r.id}-tagline" value="${this.escapeHTML(r.tagline)}">
+          </div>
+        </div>
+      </div>
+    `).join("");
+  },
+
+  async saveAdminRank(rankId) {
+    const r = ProgressionEngine.getRankById(rankId);
+    if (!r) return;
+
+    r.min_xp = parseInt(document.getElementById(`adm-${rankId}-xp`)?.value) || 0;
+    r.min_streak = parseInt(document.getElementById(`adm-${rankId}-streak`)?.value) || 0;
+    r.min_challenges = parseInt(document.getElementById(`adm-${rankId}-challenges`)?.value) || 0;
+    r.min_objectives = parseInt(document.getElementById(`adm-${rankId}-obj`)?.value) || 0;
+    r.min_dimensions_count = parseInt(document.getElementById(`adm-${rankId}-dim-count`)?.value) || 0;
+    r.min_dimension_score = parseInt(document.getElementById(`adm-${rankId}-dim-score`)?.value) || 0;
+    r.tagline = document.getElementById(`adm-${rankId}-tagline`)?.value || r.tagline;
+
+    const key = document.getElementById("admin-key-input")?.value || "egym_admin_2026";
+    const resp = await StorageManager.saveAdminRankConfig(r, key);
+    if (resp && resp.success) {
+      SoundFX.playSuccess();
+      alert(`Rank '${r.title}' criteria updated and saved to Edge D1 successfully!`);
+    } else {
+      alert(`Rank '${r.title}' criteria saved in local memory.`);
+    }
+    this.renderAll();
+  },
+
+  renderAdminLedger(serverLedger = null) {
+    const tbody = document.getElementById("admin-ledger-tbody");
+    if (!tbody) return;
+    const ledger = serverLedger || this.state.xpLedger || [];
+
+    if (ledger.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:1.5rem; color:var(--text-muted);">No XP ledger transactions recorded yet. Complete an objective to generate verifiable transactions.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = ledger.slice(0, 30).map(tx => `
+      <tr>
+        <td class="tx-id-mono">${this.escapeHTML(tx.txId || tx.id || 'tx_gen')}</td>
+        <td><span class="dimension-tag dim-execution">${tx.sourceType || 'system'}</span></td>
+        <td style="color:var(--text-gold); font-weight:700;">+${tx.amount} XP</td>
+        <td>${this.escapeHTML(tx.desc || tx.description || 'Award')}</td>
+        <td><span style="color:var(--accent-emerald); font-weight:600;">✓ Verified</span></td>
+        <td style="font-family:var(--font-mono); font-size:0.7rem; color:var(--text-muted);">${tx.timestamp ? new Date(tx.timestamp).toLocaleTimeString() : 'Recent'}</td>
+      </tr>
+    `).join("");
+  },
+
+  renderAdminSimulator() {
+    const cont = document.getElementById("admin-simulator-details");
+    if (!cont) return;
+    const evaluation = ProgressionEngine.evaluate(this.state);
+
+    cont.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); padding:1rem; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+        <div>
+          <div style="font-size:0.7rem; color:var(--text-muted); text-transform:uppercase;">Evaluated Current Standing</div>
+          <strong style="font-size:1.2rem; color:var(--text-gold);">${evaluation.currentRank.title} (Level ${evaluation.currentRank.level})</strong>
+          <div style="font-size:0.75rem; color:var(--text-secondary); margin-top:0.2rem;">Next Target: ${evaluation.nextRank ? evaluation.nextRank.title : 'Apex Legend'} (${evaluation.progressPct}%)</div>
+        </div>
+        <button class="btn btn-primary" onclick="App.testSimulatePromotion('${evaluation.nextRank ? evaluation.nextRank.id : 'legend'}')">Test Promotion Ceremony</button>
+      </div>
+
+      <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem;">
+        <div style="background:var(--bg-card); padding:0.85rem; border-radius:var(--radius-md);">
+          <div style="font-size:0.7rem; color:var(--text-muted);">SIMULATE XP INJECTION</div>
+          <button class="btn btn-secondary" style="width:100%; margin-top:0.5rem; font-size:0.75rem;" onclick="App.simulateAddXP(500)">+500 Unreal XP</button>
+        </div>
+        <div style="background:var(--bg-card); padding:0.85rem; border-radius:var(--radius-md);">
+          <div style="font-size:0.7rem; color:var(--text-muted);">SIMULATE STREAK INJECTION</div>
+          <button class="btn btn-secondary" style="width:100%; margin-top:0.5rem; font-size:0.75rem;" onclick="App.simulateAddStreak(7)">+7 Days Streak</button>
+        </div>
+        <div style="background:var(--bg-card); padding:0.85rem; border-radius:var(--radius-md);">
+          <div style="font-size:0.7rem; color:var(--text-muted);">SIMULATE RADAR BOOST</div>
+          <button class="btn btn-secondary" style="width:100%; margin-top:0.5rem; font-size:0.75rem;" onclick="App.simulateBoostRadar(10)">+10% All Dimensions</button>
+        </div>
+      </div>
+    `;
+  },
+
+  testSimulatePromotion(targetRankId) {
+    const rank = ProgressionEngine.getRankById(targetRankId) || ProgressionEngine.getRanks()[1];
+    this.closeModal("admin-modal");
+    this.showPromotionModal(rank);
+  },
+
+  simulateAddXP(amt) {
+    const res = ProgressionEngine.awardXP(this.state, amt, "admin_simulation", `sim_${Date.now()}`, `Admin simulated test injection`);
+    StorageManager.saveState(this.state);
+    SoundFX.playSuccess();
+    if (res.promotionOccurred) {
+      this.closeModal("admin-modal");
+      this.showPromotionModal(res.newRank);
+    } else {
+      this.renderAdminSimulator();
+      this.renderAdminLedger();
+      this.renderAll();
+    }
+  },
+
+  simulateAddStreak(days) {
+    this.state.stats.currentStreak += days;
+    if (this.state.stats.currentStreak > this.state.stats.longestStreak) {
+      this.state.stats.longestStreak = this.state.stats.currentStreak;
+    }
+    const promo = ProgressionEngine.checkAndApplyPromotion(this.state);
+    StorageManager.saveState(this.state);
+    SoundFX.playSuccess();
+    if (promo.promoted) {
+      this.closeModal("admin-modal");
+      this.showPromotionModal(promo.newRank);
+    } else {
+      this.renderAdminSimulator();
+      this.renderAll();
+    }
+  },
+
+  simulateBoostRadar(amt) {
+    Object.keys(this.state.dimensionsRadar).forEach(dim => {
+      this.state.dimensionsRadar[dim] = Math.min(100, (this.state.dimensionsRadar[dim] || 50) + amt);
+    });
+    const promo = ProgressionEngine.checkAndApplyPromotion(this.state);
+    StorageManager.saveState(this.state);
+    SoundFX.playSuccess();
+    if (promo.promoted) {
+      this.closeModal("admin-modal");
+      this.showPromotionModal(promo.newRank);
+    } else {
+      this.renderAdminSimulator();
+      this.renderAll();
+    }
   },
 
   escapeHTML(str) {

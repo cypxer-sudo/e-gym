@@ -360,5 +360,10 @@ const INITIAL_MEMBER_STATE = {
   writingDrafts: [],
   achievements: [
     { id: "ach-1", title: "Genesis Candidate", desc: "Initiated your journey in the E-GYM institution.", unlockedAt: "Nov 2026", icon: "award" }
-  ]
+  ],
+  currentRankId: "recruit",
+  rankHistory: [
+    { rankId: "recruit", promotedAt: "2026-11-09T00:00:00.000Z", triggerReason: "Initial Candidate Enrollment" }
+  ],
+  xpLedger: []
 };

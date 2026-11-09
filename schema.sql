@@ -1,6 +1,6 @@
 -- E-GYM Comprehensive Relational SQL Schema for Cloudflare D1 & SQLite
--- Stores all member profiles, daily objectives, check-ins, reading academy logs,
--- workout logs, writing drafts, dimensions radar, and achievements.
+-- Stores members, rank configurations, rank history, XP ledgers, objectives,
+-- check-ins, reading academy logs, workout logs, writing drafts, and dimension radar.
 
 -- 1. Members
 CREATE TABLE IF NOT EXISTS members (
@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS members (
   name TEXT NOT NULL DEFAULT 'Candidate',
   handle TEXT DEFAULT '@initiate',
   title TEXT DEFAULT 'Initiate',
+  current_rank_id TEXT DEFAULT 'recruit',
   tier TEXT DEFAULT 'Explorer',
   bio TEXT,
   avatar TEXT,
@@ -43,7 +44,53 @@ CREATE TABLE IF NOT EXISTS member_radar (
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
--- 4. Enrolled Challenges & Protocols
+-- 4. Ranks Configuration (Configurable Hierarchy & Criteria Engine)
+CREATE TABLE IF NOT EXISTS ranks_config (
+  id TEXT PRIMARY KEY,
+  rank_order INTEGER NOT NULL UNIQUE,
+  title TEXT NOT NULL,
+  tagline TEXT NOT NULL,
+  description TEXT NOT NULL,
+  emblem_key TEXT NOT NULL,
+  min_xp INTEGER NOT NULL DEFAULT 0,
+  min_challenges INTEGER NOT NULL DEFAULT 0,
+  min_streak INTEGER NOT NULL DEFAULT 0,
+  min_checkins INTEGER NOT NULL DEFAULT 0,
+  min_objectives INTEGER NOT NULL DEFAULT 0,
+  min_dimensions_count INTEGER NOT NULL DEFAULT 0,
+  min_dimension_score INTEGER NOT NULL DEFAULT 0,
+  special_criteria_desc TEXT DEFAULT '',
+  is_active INTEGER NOT NULL DEFAULT 1,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 5. Rank Progression History (Audit log of member promotions)
+CREATE TABLE IF NOT EXISTS rank_history (
+  id TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL,
+  rank_id TEXT NOT NULL,
+  rank_title TEXT NOT NULL,
+  unlocked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  achieved_xp INTEGER NOT NULL DEFAULT 0,
+  notes TEXT DEFAULT '',
+  FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+);
+
+-- 6. Anti-Tamper XP Activity Ledger (Idempotent, deduplicated transaction log)
+CREATE TABLE IF NOT EXISTS xp_ledger (
+  id TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  source_type TEXT NOT NULL, -- objective, checkin, reading, workout, writing, focus, admin
+  source_id TEXT NOT NULL,   -- deterministic reference preventing duplicate rewards
+  description TEXT NOT NULL,
+  verified INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+  UNIQUE(member_id, source_type, source_id)
+);
+
+-- 7. Enrolled Challenges & Protocols
 CREATE TABLE IF NOT EXISTS enrolled_challenges (
   id TEXT PRIMARY KEY,
   member_id TEXT NOT NULL,
@@ -55,7 +102,7 @@ CREATE TABLE IF NOT EXISTS enrolled_challenges (
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
--- 5. Daily Check-ins (Evidence & Reflection)
+-- 8. Daily Check-ins (Evidence & Reflection)
 CREATE TABLE IF NOT EXISTS check_ins (
   id TEXT PRIMARY KEY,
   member_id TEXT NOT NULL,
@@ -67,21 +114,21 @@ CREATE TABLE IF NOT EXISTS check_ins (
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
--- 6. Today's Objectives (Daily Tasks across Dimensions)
+-- 9. Today's Objectives (Daily Tasks across Dimensions)
 CREATE TABLE IF NOT EXISTS daily_objectives (
   id TEXT PRIMARY KEY,
   member_id TEXT NOT NULL,
   title TEXT NOT NULL,
-  dimension TEXT NOT NULL, -- physical, intellectual, execution, etc.
+  dimension TEXT NOT NULL,
   time_est TEXT DEFAULT '15m',
   challenge_id TEXT,
-  completed INTEGER DEFAULT 0, -- 0 for false, 1 for true
+  completed INTEGER DEFAULT 0,
   objective_date DATE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
--- 7. Mind Department: Reading Academy Logs
+-- 10. Mind Department: Reading Academy Logs
 CREATE TABLE IF NOT EXISTS reading_logs (
   id TEXT PRIMARY KEY,
   member_id TEXT NOT NULL,
@@ -95,7 +142,7 @@ CREATE TABLE IF NOT EXISTS reading_logs (
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
--- 8. Body Department: Workout Logs
+-- 11. Body Department: Workout Logs
 CREATE TABLE IF NOT EXISTS workout_logs (
   id TEXT PRIMARY KEY,
   member_id TEXT NOT NULL,
@@ -108,7 +155,7 @@ CREATE TABLE IF NOT EXISTS workout_logs (
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
--- 9. Creation Department: Writing Studio Drafts & Essays
+-- 12. Creation Department: Writing Studio Drafts & Essays
 CREATE TABLE IF NOT EXISTS writing_drafts (
   id TEXT PRIMARY KEY,
   member_id TEXT NOT NULL,
@@ -120,7 +167,7 @@ CREATE TABLE IF NOT EXISTS writing_drafts (
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
--- 10. Performance Record: Earned Achievements & Marks
+-- 13. Performance Record: Earned Achievements & Marks
 CREATE TABLE IF NOT EXISTS achievements (
   id TEXT PRIMARY KEY,
   member_id TEXT NOT NULL,
@@ -131,16 +178,15 @@ CREATE TABLE IF NOT EXISTS achievements (
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
--- 11. Consolidated Fast Edge State Cache Table (For ultra-low latency JSON hydration)
+-- 14. Consolidated Fast Edge State Cache Table (For sub-millisecond hydration)
 CREATE TABLE IF NOT EXISTS member_state (
   id TEXT PRIMARY KEY,
   state_json TEXT NOT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Indexes for lightning fast lookups
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_xp_member ON xp_ledger(member_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_rank_history_member ON rank_history(member_id, unlocked_at);
 CREATE INDEX IF NOT EXISTS idx_objectives_member_date ON daily_objectives(member_id, objective_date);
 CREATE INDEX IF NOT EXISTS idx_checkins_member ON check_ins(member_id, challenge_id);
-CREATE INDEX IF NOT EXISTS idx_reading_member ON reading_logs(member_id);
-CREATE INDEX IF NOT EXISTS idx_workout_member ON workout_logs(member_id);
-CREATE INDEX IF NOT EXISTS idx_writing_member ON writing_drafts(member_id);

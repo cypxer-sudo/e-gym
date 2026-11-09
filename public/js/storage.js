@@ -101,17 +101,30 @@ class StorageManager {
   }
 
   static getState() {
+    let state = null;
     try {
       const data = localStorage.getItem(STORAGE_KEY);
       if (data) {
-        return JSON.parse(data);
+        state = JSON.parse(data);
       }
     } catch (e) {
       console.error("Failed to read from localStorage:", e);
     }
-    const defaultState = JSON.parse(JSON.stringify(INITIAL_MEMBER_STATE));
-    this.saveLocalState(defaultState);
-    return defaultState;
+    if (!state) {
+      state = JSON.parse(JSON.stringify(INITIAL_MEMBER_STATE));
+      this.saveLocalState(state);
+    }
+    // Ensure rank and progression state structures exist
+    if (!state.currentRankId) state.currentRankId = "recruit";
+    if (!Array.isArray(state.rankHistory)) {
+      state.rankHistory = [
+        { rankId: "recruit", promotedAt: new Date().toISOString(), triggerReason: "Candidate Enrollment" }
+      ];
+    }
+    if (!Array.isArray(state.xpLedger)) {
+      state.xpLedger = [];
+    }
+    return state;
   }
 
   static saveLocalState(state) {
@@ -153,11 +166,18 @@ class StorageManager {
   static updateTodayObjective(objectiveId, completed) {
     const state = this.getState();
     const obj = state.todayObjectives.find(o => o.id === objectiveId);
+    let promoResult = null;
     if (obj) {
       obj.completed = completed;
+      const todayStr = new Date().toISOString().split("T")[0];
       if (completed) {
         state.stats.totalObjectivesDone += 1;
-        state.stats.unrealPoints += 25;
+        if (typeof ProgressionEngine !== "undefined") {
+          const res = ProgressionEngine.awardXP(state, 25, "objective", `${obj.id}_${todayStr}`, `Daily objective: ${obj.title}`);
+          if (res.promotionOccurred) promoResult = res.newRank;
+        } else {
+          state.stats.unrealPoints += 25;
+        }
         if (obj.dimension && state.dimensionsRadar[obj.dimension] !== undefined) {
           state.dimensionsRadar[obj.dimension] = Math.min(100, state.dimensionsRadar[obj.dimension] + 2);
         }
@@ -167,7 +187,7 @@ class StorageManager {
       }
       this.saveState(state);
     }
-    return state;
+    return { state, promoResult };
   }
 
   static addTodayObjective(title, dimension = "execution", timeEst = "15m") {
@@ -219,9 +239,16 @@ class StorageManager {
       });
     }
 
-    state.stats.unrealPoints += 50;
+    let promoResult = null;
+    if (typeof ProgressionEngine !== "undefined") {
+      const res = ProgressionEngine.awardXP(state, 50, "challenge_enroll", challengeId, `Enrolled in protocol: ${challenge.title}`);
+      if (res.promotionOccurred) promoResult = res.newRank;
+    } else {
+      state.stats.unrealPoints += 50;
+    }
+
     this.saveState(state);
-    return { success: true, state };
+    return { success: true, state, promoResult };
   }
 
   static logChallengeCheckIn(challengeId, note, reflection) {
@@ -242,10 +269,17 @@ class StorageManager {
     if (state.stats.currentStreak > state.stats.longestStreak) {
       state.stats.longestStreak = state.stats.currentStreak;
     }
-    state.stats.unrealPoints += 75;
+
+    let promoResult = null;
+    if (typeof ProgressionEngine !== "undefined") {
+      const res = ProgressionEngine.awardXP(state, 75, "challenge_checkin", `${challengeId}_${todayStr}`, `Protocol check-in: Day ${enrollment.currentDay}`);
+      if (res.promotionOccurred) promoResult = res.newRank;
+    } else {
+      state.stats.unrealPoints += 75;
+    }
 
     this.saveState(state);
-    return { success: true, state };
+    return { success: true, state, promoResult };
   }
 
   static addReadingLog(entry) {
@@ -256,10 +290,17 @@ class StorageManager {
       ...entry
     };
     state.readingLog.unshift(logItem);
-    state.stats.unrealPoints += 30;
+
+    let promoResult = null;
+    if (typeof ProgressionEngine !== "undefined") {
+      const res = ProgressionEngine.awardXP(state, 30, "reading_log", logItem.id, `Reading session: ${entry.bookTitle || 'Reading log'}`);
+      if (res.promotionOccurred) promoResult = res.newRank;
+    } else {
+      state.stats.unrealPoints += 30;
+    }
     state.dimensionsRadar.intellectual = Math.min(100, state.dimensionsRadar.intellectual + 3);
     this.saveState(state);
-    return state;
+    return { state, promoResult };
   }
 
   static addWorkoutLog(entry) {
@@ -270,35 +311,50 @@ class StorageManager {
       ...entry
     };
     state.workoutLog.unshift(workoutItem);
-    state.stats.unrealPoints += 40;
+
+    let promoResult = null;
+    if (typeof ProgressionEngine !== "undefined") {
+      const res = ProgressionEngine.awardXP(state, 40, "workout_log", workoutItem.id, `Movement session: ${entry.title || 'Workout'}`);
+      if (res.promotionOccurred) promoResult = res.newRank;
+    } else {
+      state.stats.unrealPoints += 40;
+    }
     state.dimensionsRadar.physical = Math.min(100, state.dimensionsRadar.physical + 4);
     this.saveState(state);
-    return state;
+    return { state, promoResult };
   }
 
   static saveWritingDraft(title, content) {
     const state = this.getState();
     const wordCount = content.trim() ? content.trim().split(/\s+/).length : 0;
     const existing = state.writingDrafts.find(d => d.title === title);
+    const todayStr = new Date().toISOString().split("T")[0];
 
     if (existing) {
       existing.content = content;
       existing.wordCount = wordCount;
-      existing.updatedAt = new Date().toISOString().split("T")[0];
+      existing.updatedAt = todayStr;
     } else {
       state.writingDrafts.unshift({
         id: "wd-" + Date.now(),
         title: title || "Untitled Synthesis",
         content,
         wordCount,
-        updatedAt: new Date().toISOString().split("T")[0]
+        updatedAt: todayStr
       });
     }
 
-    state.stats.unrealPoints += 20;
+    let promoResult = null;
+    if (typeof ProgressionEngine !== "undefined") {
+      const cleanTitle = (title || "untitled").replace(/[^a-zA-Z0-9]/g, "_").toLowerCase();
+      const res = ProgressionEngine.awardXP(state, 20, "writing_draft", `${cleanTitle}_${todayStr}`, `Synthesis draft: ${title || 'Untitled'}`);
+      if (res.promotionOccurred) promoResult = res.newRank;
+    } else {
+      state.stats.unrealPoints += 20;
+    }
     state.dimensionsRadar.creative = Math.min(100, state.dimensionsRadar.creative + 3);
     this.saveState(state);
-    return state;
+    return { state, promoResult };
   }
 
   static setTier(tierName) {
@@ -340,6 +396,34 @@ class StorageManager {
       return { success: false, message: "Invalid backup format." };
     } catch (e) {
       return { success: false, message: "JSON parsing error: " + e.message };
+    }
+  }
+
+  static async fetchAdminAudit(adminKey = "egym_admin_2026") {
+    try {
+      const resp = await fetch("/api/ranks/audit", {
+        headers: { "x-admin-key": adminKey }
+      });
+      if (resp.ok) return await resp.json();
+    } catch (e) {
+      console.warn("Audit fetch failed:", e);
+    }
+    return null;
+  }
+
+  static async saveAdminRankConfig(rankObj, adminKey = "egym_admin_2026") {
+    try {
+      const resp = await fetch("/api/ranks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-admin-key": adminKey
+        },
+        body: JSON.stringify(rankObj)
+      });
+      return await resp.json();
+    } catch (e) {
+      return { success: false, error: e.message };
     }
   }
 }
