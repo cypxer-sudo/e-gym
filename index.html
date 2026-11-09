@@ -464,13 +464,16 @@
         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80" alt="Member Avatar" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover;">
         <div style="flex: 1;">
           <div style="display:flex; align-items:center; gap:0.85rem; margin-bottom:0.35rem;">
-            <h2 id="profile-name" style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800;">Alex Vance</h2>
-            <span class="tier-badge" id="profile-tier-badge" style="position:static; transform:none;">Member</span>
+            <h2 id="profile-name" style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800;">New Member</h2>
+            <span class="tier-badge" id="profile-tier-badge" style="position:static; transform:none;">Explorer</span>
           </div>
-          <div id="profile-handle" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">@vance_builds • Member since Nov 2026</div>
-          <p id="profile-bio" style="font-size: 0.9rem; color: var(--text-secondary); max-width: 650px;">Training every dimension. Focusing on deliberate execution, physical strength, and philosophical clarity.</p>
+          <div id="profile-handle" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">@initiate • Member since Nov 2026</div>
+          <p id="profile-bio" style="font-size: 0.9rem; color: var(--text-secondary); max-width: 650px;">Ready to train every dimension. Setting initial benchmarks.</p>
         </div>
-        <button class="btn btn-outline-gold" onclick="App.openSettingsModal()">Export Dossier Backup</button>
+        <div style="display:flex; flex-direction:column; gap:0.5rem;">
+          <button class="btn btn-primary" onclick="App.openEditProfileModal()">Edit Dossier</button>
+          <button class="btn btn-outline-gold" onclick="App.openSettingsModal()">Vault & Backup</button>
+        </div>
       </div>
 
       <!-- Verified Credentials & Badges Grid -->
@@ -639,6 +642,35 @@
           <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.75rem;">Clear LocalStorage and restore the default seed blueprint data.</p>
           <button class="btn btn-secondary" style="color:#F43F5E; border-color:#F43F5E;" onclick="App.resetAllData()">Reset Baseline Data</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit Profile / Dossier -->
+  <div class="modal-overlay" id="edit-profile-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-btn" onclick="App.closeModal('edit-profile-modal')">&times;</button>
+      <h3 style="font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; color: #FFFFFF;">Edit Member Dossier</h3>
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">Customize your identity on this device.</p>
+      
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input type="text" id="edit-profile-name" class="form-input" placeholder="e.g. Alex Vance">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Handle</label>
+        <input type="text" id="edit-profile-handle" class="form-input" placeholder="e.g. @operator">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Bio / Mission Statement</label>
+        <textarea id="edit-profile-bio" class="form-textarea" rows="3" placeholder="Training every dimension..."></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+        <button class="btn btn-secondary" onclick="App.closeModal('edit-profile-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="App.submitEditProfile()">Save Dossier</button>
       </div>
     </div>
   </div>

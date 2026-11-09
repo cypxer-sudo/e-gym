@@ -1,26 +1,45 @@
-// E-GYM Hybrid State Management (Cloudflare Edge D1 + LocalStorage Cache)
-// Automatically syncs with Cloudflare Pages Functions (/api/state) with instant offline cache.
+// E-GYM Multi-Device State Management
+// Assigns each device/user an isolated Member UUID with Cloudflare Edge D1 Sync + LocalStorage
 
-const STORAGE_KEY = "EGYM_MEMBER_STATE_V2";
+const STORAGE_KEY = "EGYM_MEMBER_STATE_V3";
+const MEMBER_ID_KEY = "EGYM_MEMBER_UUID";
 
 class StorageManager {
-  static isCloudflareConnected = false;
+  static getMemberId() {
+    let id = localStorage.getItem(MEMBER_ID_KEY);
+    if (!id) {
+      const randPart = typeof crypto.randomUUID === "function" 
+        ? crypto.randomUUID() 
+        : Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+      id = "mem_" + randPart;
+      localStorage.setItem(MEMBER_ID_KEY, id);
+    }
+    return id;
+  }
 
   static async initCloudSync() {
+    const memberId = this.getMemberId();
     try {
-      const resp = await fetch("/api/state");
+      const resp = await fetch("/api/state", {
+        headers: { "x-member-id": memberId }
+      });
+
       if (resp.ok) {
         const cloudData = await resp.json();
         if (cloudData && cloudData.profile) {
-          console.log("[E-GYM Cloud] Loaded state from Cloudflare D1.");
+          console.log("[E-GYM Edge] Loaded member state from Cloudflare D1.");
           this.saveLocalState(cloudData);
-          this.isCloudflareConnected = true;
           return cloudData;
         }
+      } else if (resp.status === 404) {
+        // Brand new member on this device: initialize clean state and sync
+        console.log("[E-GYM Edge] New member detected. Initializing fresh edge record.");
+        const cleanState = this.getState();
+        await this.syncToCloud(cleanState);
+        return cleanState;
       }
     } catch (e) {
-      // Local development or running via file://
-      console.log("[E-GYM Local] Running in local offline-first mode.");
+      console.log("[E-GYM Local] Running local-first mode on device.");
     }
     return this.getState();
   }
@@ -49,19 +68,30 @@ class StorageManager {
 
   static async syncToCloud(state) {
     this.saveLocalState(state);
+    const memberId = this.getMemberId();
     try {
       await fetch("/api/state", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-member-id": memberId
+        },
         body: JSON.stringify(state)
       });
-    } catch (e) {
-      // Offline or local
-    }
+    } catch (e) {}
   }
 
   static saveState(state) {
     this.syncToCloud(state);
+  }
+
+  static updateProfile(name, handle, bio) {
+    const state = this.getState();
+    if (name) state.profile.name = name.trim();
+    if (handle) state.profile.handle = handle.startsWith("@") ? handle.trim() : "@" + handle.trim();
+    if (bio) state.profile.bio = bio.trim();
+    this.saveState(state);
+    return state;
   }
 
   static updateTodayObjective(objectiveId, completed) {
@@ -120,7 +150,6 @@ class StorageManager {
     };
     state.enrolledChallenges.push(newEnrollment);
 
-    // Add challenge objectives to today's objectives
     if (challenge.dailyObjectives && challenge.dailyObjectives.length > 0) {
       challenge.dailyObjectives.forEach(dObj => {
         state.todayObjectives.push({
@@ -226,8 +255,12 @@ class StorageManager {
   static async resetToDefault() {
     const defaultState = JSON.parse(JSON.stringify(INITIAL_MEMBER_STATE));
     this.saveLocalState(defaultState);
+    const memberId = this.getMemberId();
     try {
-      await fetch("/api/reset", { method: "POST" });
+      await fetch("/api/reset", {
+        method: "POST",
+        headers: { "x-member-id": memberId }
+      });
     } catch (e) {}
     return defaultState;
   }

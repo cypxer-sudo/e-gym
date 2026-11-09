@@ -1009,6 +1009,29 @@ const App = {
   },
 
   // -------------------------------------------------------------
+  // Profile Customization
+  // -------------------------------------------------------------
+  openEditProfileModal() {
+    document.getElementById("edit-profile-name").value = this.state.profile.name || "";
+    document.getElementById("edit-profile-handle").value = this.state.profile.handle || "";
+    document.getElementById("edit-profile-bio").value = this.state.profile.bio || "";
+    this.openModal("edit-profile-modal");
+  },
+
+  submitEditProfile() {
+    const name = document.getElementById("edit-profile-name").value;
+    const handle = document.getElementById("edit-profile-handle").value;
+    const bio = document.getElementById("edit-profile-bio").value;
+
+    this.state = StorageManager.updateProfile(name, handle, bio);
+    SoundFX.playSuccess();
+    this.closeModal("edit-profile-modal");
+    this.renderProfile();
+    this.renderTopBar();
+    alert("Dossier profile updated!");
+  },
+
+  // -------------------------------------------------------------
   // Data Backup & Reset
   // -------------------------------------------------------------
   openSettingsModal() {
