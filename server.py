@@ -6,6 +6,8 @@ import sys
 
 PORT = 8000
 DIRECTORY = os.path.dirname(os.path.abspath(__file__))
+if os.path.exists(os.path.join(DIRECTORY, "public")):
+    DIRECTORY = os.path.join(DIRECTORY, "public")
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):

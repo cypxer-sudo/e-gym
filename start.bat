@@ -22,6 +22,10 @@ if exist "%LOCALAPPDATA%\Programs\Python\Python314\python.exe" (
 
 REM 3. Fallback: Directly open index.html in the default browser
 echo Python not found in standard paths. Launching standalone web app...
-start index.html
+if exist "public\index.html" (
+    start public\index.html
+) else (
+    start index.html
+)
 
 :end
