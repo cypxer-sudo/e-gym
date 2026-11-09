@@ -1,10 +1,11 @@
-name = "egym-platform"
+name = "e-gym"
 compatibility_date = "2024-11-01"
 pages_build_output_dir = "."
 
+[assets]
+directory = "."
+
 # Cloudflare D1 Database binding
-# Link your D1 database to "DB" in Cloudflare Dashboard:
-# Workers & Pages > egym-platform > Settings > Functions > D1 Database Bindings
 [[d1_databases]]
 binding = "DB"
 database_name = "egym-db"
