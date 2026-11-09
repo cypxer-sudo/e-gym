@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-GYM — The Self-Development Platform | Become Unreal</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+</head>
+<body>
+
+  <!-- Top Institutional Bar -->
+  <aside class="brand-topbar" aria-label="Brand bar">
+    <div class="motto">BECOME UNREAL. TRAIN EVERY DIMENSION.</div>
+    <div class="controls">
+      <button class="topbar-btn" id="mute-toggle-btn" title="Toggle Acoustic Chimes">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        Audio: On
+      </button>
+      <button class="topbar-btn" onclick="App.openSettingsModal()" title="Data Backup & Reset">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Vault & Data
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Navigation Header -->
+  <header class="app-header">
+    <div class="container nav-wrapper">
+      <div class="brand-logo" id="app-logo">
+        <div class="logo-badge">E</div>
+        <div class="brand-title">
+          <span class="brand-name">E-GYM</span>
+          <span class="brand-strapline">Performance Institution</span>
+        </div>
+      </div>
+
+      <nav class="main-nav" aria-label="Main Navigation">
+        <button class="nav-tab active" data-view="hq">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Personal HQ
+        </button>
+        <button class="nav-tab" data-view="challenges">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          Challenge Arena
+        </button>
+        <button class="nav-tab" data-view="departments">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+          Departments
+        </button>
+        <button class="nav-tab" data-view="profile">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Performance Record
+        </button>
+        <button class="nav-tab" data-view="membership">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Membership
+        </button>
+      </nav>
+
+      <div class="user-quick-profile">
+        <span class="tier-pill" id="header-tier-pill" title="Click to view membership tiers">Member</span>
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Member Avatar" class="avatar-circle" id="header-avatar" title="View Development Record">
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="container app-body">
+
+    <!-- ========================================== -->
+    <!-- VIEW 1: PERSONAL HQ (HOME)                -->
+    <!-- ========================================== -->
+    <section id="view-hq" class="view-section active-view">
+      <div class="hq-hero">
+        <div class="hq-welcome">
+          <h1>Personal HQ</h1>
+          <p>“Transform so much that people struggle to believe you are the same person.”</p>
+        </div>
+        <div class="hq-hero-actions">
+          <button class="btn btn-primary" onclick="App.openAddObjectiveModal()">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Objective
+          </button>
+          <button class="btn btn-secondary" onclick="App.switchView('departments'); App.switchDeptSub('execution');">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Deep Work Timer
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Bar -->
+      <div class="stats-bar">
+        <div class="stat-card stat-gold">
+          <div class="stat-header">
+            <span>Consecutive Streak</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+          </div>
+          <div class="stat-value" id="stat-streak">12 Days</div>
+          <div class="stat-sub">Zero zero-days standard</div>
+        </div>
+
+        <div class="stat-card stat-emerald">
+          <div class="stat-header">
+            <span>Today's Execution</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 10"/></svg>
+          </div>
+          <div class="stat-value" id="stat-rate">60%</div>
+          <div class="stat-sub">Objectives fulfilled</div>
+        </div>
+
+        <div class="stat-card stat-blue">
+          <div class="stat-header">
+            <span>Unreal Points</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div class="stat-value" id="stat-points">1,250</div>
+          <div class="stat-sub">Discipline equity accumulated</div>
+        </div>
+
+        <div class="stat-card stat-purple">
+          <div class="stat-header">
+            <span>Milestones Cleared</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div class="stat-value" id="stat-total-done">142</div>
+          <div class="stat-sub">Lifetime verifiable tasks</div>
+        </div>
+      </div>
+
+      <!-- Main HQ Split: Left Command / Right Radar & Departments -->
+      <div class="hq-grid">
+        <div class="hq-main-col">
+          <!-- Today's Objectives -->
+          <div class="card-section">
+            <div class="section-head">
+              <div class="section-title-wrap">
+                <h2 class="section-title">Today's Objectives</h2>
+                <span class="badge-counter" id="hq-obj-count-badge">3/5 Done</span>
+              </div>
+              <button class="topbar-btn" style="color:var(--text-gold);" onclick="App.openAddObjectiveModal()">+ Add New</button>
+            </div>
+            <div class="objectives-list" id="hq-objectives-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Active Enrolled Challenges -->
+          <div class="card-section">
+            <div class="section-head">
+              <div class="section-title-wrap">
+                <h2 class="section-title">Active Flagship Challenges</h2>
+              </div>
+              <button class="topbar-btn" style="color:var(--text-gold);" onclick="App.switchView('challenges')">Explore All</button>
+            </div>
+            <div class="active-challenges-grid" id="hq-active-challenges-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: 8-Dimension Audit & Quick Tools -->
+        <div class="hq-side-col">
+          <div class="radar-box">
+            <div class="section-head" style="width: 100%; margin-bottom: 0.5rem;">
+              <h3 class="section-title" style="font-size: 1.05rem;">Train Every Dimension</h3>
+              <span class="badge-counter">8 Vectors</span>
+            </div>
+            <p style="font-size:0.75rem; color:var(--text-muted); text-align:center; margin-bottom:1rem;">Balanced human development across all vital domains.</p>
+            <canvas id="dimensions-radar-canvas" width="280" height="280" style="width: 280px; height: 280px;"></canvas>
+            <div class="dimensions-list-compact" id="dimensions-compact-list">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Quick Department Nav Box -->
+          <div class="card-section" style="margin-top: 1.5rem;">
+            <h3 class="section-title" style="font-size: 1.05rem; margin-bottom: 0.85rem;">Quick Access</h3>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              <button class="btn btn-secondary" style="justify-content: flex-start;" onclick="App.switchView('departments'); App.switchDeptSub('mind');">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                Mind: Reading Academy & Roadmaps
+              </button>
+              <button class="btn btn-secondary" style="justify-content: flex-start;" onclick="App.switchView('departments'); App.switchDeptSub('body');">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/></svg>
+                Body: Movement & Exercise Library
+              </button>
+              <button class="btn btn-secondary" style="justify-content: flex-start;" onclick="App.switchView('departments'); App.switchDeptSub('creation');">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/></svg>
+                Creation: Writing Studio & Prompts
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 2: CHALLENGE ARENA                   -->
+    <!-- ========================================== -->
+    <section id="view-challenges" class="view-section">
+      <div class="hq-hero">
+        <div class="hq-welcome">
+          <h1>The Challenge Arena</h1>
+          <p>Turn vague intentions into time-bound programs with a clear finish line and verifiable standards.</p>
+        </div>
+      </div>
+
+      <div class="catalog-filters">
+        <div class="filter-pills">
+          <button class="filter-btn active" data-filter="all">All Disciplines</button>
+          <button class="filter-btn" data-filter="execution">Execution</button>
+          <button class="filter-btn" data-filter="mind">Mind</button>
+          <button class="filter-btn" data-filter="body">Body</button>
+          <button class="filter-btn" data-filter="creation">Creation</button>
+          <button class="filter-btn" data-filter="growth">Growth</button>
+        </div>
+      </div>
+
+      <div class="challenges-grid" id="arena-challenges-grid">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 3: DEPARTMENTS                       -->
+    <!-- ========================================== -->
+    <section id="view-departments" class="view-section">
+      <div class="hq-hero">
+        <div class="hq-welcome">
+          <h1>Departments</h1>
+          <p>Specialized training environments providing tools, roadmaps, and structure for each dimension.</p>
+        </div>
+      </div>
+
+      <!-- Department Selector Sub-Nav -->
+      <div class="dept-nav">
+        <button class="dept-tab-btn active" data-subview="mind">1. MIND — Reading Academy</button>
+        <button class="dept-tab-btn" data-subview="body">2. BODY — Fitness & Health</button>
+        <button class="dept-tab-btn" data-subview="execution">3. EXECUTION — Focus & Pomodoro</button>
+        <button class="dept-tab-btn" data-subview="creation">4. CREATION — Writing Studio</button>
+        <button class="dept-tab-btn" data-subview="growth">5. GROWTH & CONNECTION</button>
+      </div>
+
+      <!-- SUBVIEW 1: MIND (Reading Academy) -->
+      <div id="dept-sub-mind" class="dept-subview active-subview">
+        <div style="margin-bottom: 2rem;">
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.25rem;">Reading Academy</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">Move from "I want to read" to "I read consistently, understand ideas and apply what I learn."</p>
+        </div>
+
+        <h3 class="section-title" style="margin-bottom: 1rem;">Curated Reading Roadmaps</h3>
+        <div class="reading-roadmaps-grid" id="reading-roadmaps-container">
+          <!-- Rendered via JS -->
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem;">
+          <!-- Reading Logger Form -->
+          <div class="card-section">
+            <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 1rem;">Log Reading Session & Insight</h3>
+            <div class="form-group">
+              <label class="form-label">Book Title</label>
+              <input type="text" id="reader-book-input" class="form-input" placeholder="e.g. Atomic Habits or Meditations">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pages / Chapters Covered</label>
+              <input type="number" id="reader-pages-input" class="form-input" placeholder="e.g. 25">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Key Insight / Reflection (What surprised or challenged you?)</label>
+              <textarea id="reader-insight-input" class="form-textarea" rows="3" placeholder="Write one profound synthesis..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Actionable Application (What will you test tomorrow?)</label>
+              <input type="text" id="reader-action-input" class="form-input" placeholder="e.g. Remove phone from workspace">
+            </div>
+            <button class="btn btn-primary" style="width:100%;" onclick="App.submitReadingEntry()">Commit Reading Log</button>
+          </div>
+
+          <!-- Past Reading Notes -->
+          <div class="card-section">
+            <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 1rem;">Reading Journal Archive</h3>
+            <div id="reading-log-history">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBVIEW 2: BODY (Fitness & Health) -->
+      <div id="dept-sub-body" class="dept-subview">
+        <div style="margin-bottom: 2rem;">
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.25rem;">Body — Fitness & Health</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">Preloaded movement plans, scalable mechanics, and progressive overload logging.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap: 2rem;">
+          <!-- Exercise Library -->
+          <div>
+            <h3 class="section-title" style="margin-bottom: 1rem;">Fundamental Movement Library</h3>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;" id="fitness-exercise-library">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Workout Logger -->
+          <div>
+            <div class="card-section">
+              <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 1rem;">Log Workout Session</h3>
+              <div class="form-group">
+                <label class="form-label">Session / Movement</label>
+                <input type="text" id="workout-name-input" class="form-input" placeholder="e.g. Push & Mobility Flow">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Sets & Reps Summary</label>
+                <input type="text" id="workout-sets-input" class="form-input" placeholder="e.g. 4 sets × 15 pushups, 3 sets × 20 squats">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Performance Notes / Recovery State</label>
+                <textarea id="workout-notes-input" class="form-textarea" rows="2" placeholder="e.g. Clean eccentric control, no shoulder friction"></textarea>
+              </div>
+              <button class="btn btn-primary" style="width:100%;" onclick="App.submitWorkoutEntry()">Record Workout Log</button>
+            </div>
+
+            <div class="card-section">
+              <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 1rem;">Recent Movement History</h3>
+              <div id="fitness-workout-history">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBVIEW 3: EXECUTION (Focus & Pomodoro) -->
+      <div id="dept-sub-execution" class="dept-subview">
+        <div style="margin-bottom: 2rem;">
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.25rem;">Execution — Focus & Discipline</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">Deep work timer, distraction shielding rituals, and uninterrupted cognitive blocks.</p>
+        </div>
+
+        <div class="focus-timer-box">
+          <div class="timer-preset-pills">
+            <button class="timer-pill active" data-minutes="25">25m Standard Block</button>
+            <button class="timer-pill" data-minutes="50">50m Deep Flow</button>
+            <button class="timer-pill" data-minutes="5">5m Reset Break</button>
+          </div>
+
+          <div class="timer-display" id="timer-display">25:00</div>
+
+          <div class="timer-controls">
+            <button class="btn btn-primary" id="timer-toggle-btn" style="min-width: 170px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Start Focus Block
+            </button>
+            <button class="btn btn-secondary" id="timer-reset-btn">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 0 0 3.2 7.2L2.5 8M2 12.5a10 10 0 0 0 18.8 4.3l.7-.8"/></svg>
+              Reset
+            </button>
+          </div>
+        </div>
+
+        <div style="max-width: 600px; margin: 0 auto; background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 1.5rem;">
+          <h4 style="font-family: var(--font-display); font-size: 0.95rem; color: #FFFFFF; margin-bottom: 0.75rem;">Digital Boundary Protocols</h4>
+          <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.85rem; color: var(--text-secondary);">
+            <li style="display:flex; align-items:center; gap:0.5rem;"><span style="color:var(--text-gold);">✔</span> Phone placed face down in another room during focus blocks.</li>
+            <li style="display:flex; align-items:center; gap:0.5rem;"><span style="color:var(--text-gold);">✔</span> Single browser tab rule: no incidental news or social scrolling.</li>
+            <li style="display:flex; align-items:center; gap:0.5rem;"><span style="color:var(--text-gold);">✔</span> 21:00 evening digital shutdown: zero screens 60 minutes prior to sleep.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- SUBVIEW 4: CREATION (Writing Studio) -->
+      <div id="dept-sub-creation" class="dept-subview">
+        <div style="margin-bottom: 2rem;">
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.25rem;">Creation — Writing Studio</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">Turn vague thoughts into structured, published prose. Writing is thinking made visible.</p>
+        </div>
+
+        <div class="writing-studio-wrap">
+          <div class="writing-editor-box">
+            <input type="text" id="writing-editor-title" class="editor-title-input" placeholder="Title of Essay / Reflection..." value="The Architecture of Follow-Through">
+            <textarea id="writing-editor-body" class="editor-textarea" placeholder="Start typing uninterrupted..."></textarea>
+            <div class="editor-bar">
+              <span id="writing-word-count">56 words</span>
+              <button class="btn btn-primary" onclick="App.saveCurrentDraft()">Save to Portfolio</button>
+            </div>
+          </div>
+
+          <div class="prompt-cards-column">
+            <h4 class="section-title" style="font-size: 1rem;">Reflection Prompts</h4>
+            <div id="writing-prompts-container" style="display:flex; flex-direction:column; gap:0.75rem;">
+              <!-- Rendered via JS -->
+            </div>
+
+            <h4 class="section-title" style="font-size: 1rem; margin-top: 1.5rem;">Saved Drafts</h4>
+            <div id="writing-saved-drafts">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBVIEW 5: GROWTH & CONNECTION -->
+      <div id="dept-sub-growth" class="dept-subview">
+        <div style="margin-bottom: 2rem;">
+          <h2 style="font-family: var(--font-display); font-size: 1.5rem; margin-bottom: 0.25rem;">Growth & Connection</h2>
+          <p style="color: var(--text-secondary); font-size: 0.9rem;">High-leverage competence roadmaps and accountability cohort circles.</p>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+          <div class="card-section">
+            <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 1rem;">Skill Development Pathways</h3>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+              <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem;">
+                <div style="font-weight:700; color:#FFFFFF;">High-Stakes Negotiation & Communication</div>
+                <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.25rem;">Tactical empathy, calibrated questions, and structuring asymmetric value exchanges.</div>
+                <div style="font-size:0.7rem; color:var(--text-gold); margin-top:0.5rem; font-weight:600;">Status: Open Syllabus</div>
+              </div>
+              <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem;">
+                <div style="font-weight:700; color:#FFFFFF;">Venture & Demand Validation</div>
+                <div style="font-size:0.8rem; color:var(--text-secondary); margin-top:0.25rem;">Validating real problems with 15 customer discovery interviews before engineering code.</div>
+                <div style="font-size:0.7rem; color:var(--text-gold); margin-top:0.5rem; font-weight:600;">Linked Challenge: 30-Day Startup Sprint</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card-section">
+            <h3 class="section-title" style="font-size: 1.15rem; margin-bottom: 1rem;">Accountability Cohorts</h3>
+            <div style="display:flex; flex-direction:column; gap:0.75rem;">
+              <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:700; color:#FFFFFF;">Dawn Patrol (06:00 AM Circle)</div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary);">18 active members • 94% weekly attendance</div>
+                </div>
+                <span class="badge-counter" style="color:var(--accent-emerald);">Active</span>
+              </div>
+              <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:700; color:#FFFFFF;">75-Day Discipline Vanguard Cohort</div>
+                  <div style="font-size:0.75rem; color:var(--text-secondary);">Daily evidence check-in circle</div>
+                </div>
+                <span class="badge-counter" style="color:var(--text-gold);">Enrolled</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 4: PERFORMANCE RECORD (PROFILE)      -->
+    <!-- ========================================== -->
+    <section id="view-profile" class="view-section">
+      <div class="hq-hero">
+        <div class="hq-welcome">
+          <h1>Performance Record</h1>
+          <p>The permanent institutional ledger of your completed protocols, streaks, and verified achievements.</p>
+        </div>
+      </div>
+
+      <!-- Member Dossier Header -->
+      <div class="card-section" style="display: flex; gap: 2rem; align-items: center; margin-bottom: 2.5rem; flex-wrap: wrap;">
+        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80" alt="Member Avatar" style="width: 100px; height: 100px; border-radius: 50%; border: 2px solid var(--gold-primary); object-fit: cover;">
+        <div style="flex: 1;">
+          <div style="display:flex; align-items:center; gap:0.85rem; margin-bottom:0.35rem;">
+            <h2 id="profile-name" style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 800;">Alex Vance</h2>
+            <span class="tier-badge" id="profile-tier-badge" style="position:static; transform:none;">Member</span>
+          </div>
+          <div id="profile-handle" style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">@vance_builds • Member since Nov 2026</div>
+          <p id="profile-bio" style="font-size: 0.9rem; color: var(--text-secondary); max-width: 650px;">Training every dimension. Focusing on deliberate execution, physical strength, and philosophical clarity.</p>
+        </div>
+        <button class="btn btn-outline-gold" onclick="App.openSettingsModal()">Export Dossier Backup</button>
+      </div>
+
+      <!-- Verified Credentials & Badges Grid -->
+      <div style="display:grid; grid-template-columns: 1fr 1.2fr; gap: 2rem;">
+        <div>
+          <h3 class="section-title" style="margin-bottom: 1rem;">Earned Institutional Marks</h3>
+          <div id="profile-achievements-grid" style="display:flex; flex-direction:column; gap:0.85rem;">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <div>
+          <h3 class="section-title" style="margin-bottom: 1rem;">Protocol Verification Credentials</h3>
+          <div id="profile-certificates-list">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 5: MEMBERSHIP                        -->
+    <!-- ========================================== -->
+    <section id="view-membership" class="view-section">
+      <div class="membership-intro">
+        <h2>Institutional Membership</h2>
+        <p>Three tiers designed to accompany you as you graduate from habit experimentation into elite execution.</p>
+      </div>
+
+      <div class="tiers-grid" id="membership-tiers-grid">
+        <!-- Rendered via JS -->
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODALS                                     -->
+  <!-- ========================================== -->
+
+  <!-- Modal: Challenge Detail & Syllabus -->
+  <div class="modal-overlay" id="challenge-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-btn" onclick="App.closeModal('challenge-modal')">&times;</button>
+      <h3 id="challenge-modal-title" style="font-family: var(--font-display); font-size: 1.6rem; margin-bottom: 1rem; color: #FFFFFF;">Protocol Details</h3>
+      <div id="challenge-modal-content">
+        <!-- Injected via JS -->
+      </div>
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button class="btn btn-secondary" onclick="App.closeModal('challenge-modal')">Close</button>
+        <button id="challenge-modal-enroll-btn" class="btn btn-primary">Commit & Enroll</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Daily Check-In -->
+  <div class="modal-overlay" id="checkin-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-btn" onclick="App.closeModal('checkin-modal')">&times;</button>
+      <h3 id="checkin-modal-title" style="font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; color: #FFFFFF;">Daily Protocol Check-In</h3>
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">Document follow-through. Consistency is the only valid proof of transformation.</p>
+      
+      <div class="form-group">
+        <label class="form-label">What did you execute today? (Objective Summary)</label>
+        <input type="text" id="checkin-notes-input" class="form-input" placeholder="e.g. 45m workout, 20m reading completed without distractions">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Reflection & Friction Point (What resistance did you overcome?)</label>
+        <textarea id="checkin-reflection-input" class="form-textarea" rows="3" placeholder="Honest self-appraisal of today's focus and discipline..."></textarea>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+        <button class="btn btn-secondary" onclick="App.closeModal('checkin-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="App.submitCheckIn()">Verify & Log Check-In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Objective -->
+  <div class="modal-overlay" id="add-objective-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-btn" onclick="App.closeModal('add-objective-modal')">&times;</button>
+      <h3 style="font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 1rem; color: #FFFFFF;">Add Custom Objective</h3>
+      
+      <div class="form-group">
+        <label class="form-label">Objective Description</label>
+        <input type="text" id="new-obj-title" class="form-input" placeholder="e.g. Write 500 words on system architecture">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Target Dimension</label>
+        <select id="new-obj-dimension" class="form-select">
+          <option value="execution">Execution / Discipline</option>
+          <option value="physical">Physical Health</option>
+          <option value="intellectual">Intellectual</option>
+          <option value="creative">Creative Expression</option>
+          <option value="professional">Professional Competence</option>
+          <option value="emotional">Emotional Resilience</option>
+          <option value="social">Social & Relationships</option>
+          <option value="financial">Financial Capability</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Estimated Time Commitment</label>
+        <input type="text" id="new-obj-time" class="form-input" placeholder="e.g. 30m">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+        <button class="btn btn-secondary" onclick="App.closeModal('add-objective-modal')">Cancel</button>
+        <button class="btn btn-primary" onclick="App.submitAddObjective()">Add to Personal HQ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Official Completion Certificate -->
+  <div class="modal-overlay" id="certificate-modal">
+    <div class="modal-dialog" style="max-width: 680px;">
+      <button class="modal-close-btn" onclick="App.closeModal('certificate-modal')">&times;</button>
+      <div class="certificate-frame">
+        <div class="cert-seal">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+        </div>
+        <div style="font-family: var(--font-display); font-size: 0.85rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-gold); margin-bottom: 0.5rem;">E-GYM Performance Institution</div>
+        <h2 style="font-family: var(--font-display); font-size: 1.8rem; color: #FFFFFF; margin-bottom: 1rem;">Official Protocol Credential</h2>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1.5rem;">This certifies that</p>
+        <div id="cert-recipient-name" style="font-family: var(--font-display); font-size: 1.7rem; font-weight: 800; color: var(--text-gold); border-bottom: 1px solid var(--border-gold); display: inline-block; padding: 0 1.5rem 0.5rem; margin-bottom: 1.5rem;">Alex Vance</div>
+        <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem;">is actively mastering the rigorous discipline of</p>
+        <h3 id="cert-challenge-title" style="font-family: var(--font-display); font-size: 1.35rem; color: #FFFFFF; margin-bottom: 1.5rem;">75-Day Discipline Protocol</h3>
+        
+        <div style="display:flex; justify-content:space-between; margin-top: 2rem; border-top: 1px solid var(--border-subtle); padding-top: 1rem; font-size: 0.75rem; color: var(--text-muted);">
+          <div>Date: <span id="cert-issue-date" style="color:var(--text-primary);">November 9, 2026</span></div>
+          <div>Verification: <span id="cert-hash-id" style="font-family:var(--font-mono); color:var(--text-gold);">UNREAL-ID-883921</span></div>
+        </div>
+      </div>
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.75rem;">
+        <button class="btn btn-secondary" onclick="window.print()">Print / Save PDF</button>
+        <button class="btn btn-primary" onclick="App.closeModal('certificate-modal')">Close Credential</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Settings & Backup -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-dialog">
+      <button class="modal-close-btn" onclick="App.closeModal('settings-modal')">&times;</button>
+      <h3 style="font-family: var(--font-display); font-size: 1.4rem; margin-bottom: 0.5rem; color: #FFFFFF;">Vault & Data Management</h3>
+      <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:1.5rem;">Export your progress, restore from a backup file, or reset the workspace.</p>
+      
+      <div style="display:flex; flex-direction:column; gap:1rem;">
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem;">
+          <h4 style="color:#FFFFFF; font-size:0.95rem; margin-bottom:0.25rem;">Export JSON Backup</h4>
+          <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.75rem;">Download all completed objectives, reading journals, workout logs, and radar data.</p>
+          <button class="btn btn-outline-gold" onclick="App.exportBackup()">Download Backup (.json)</button>
+        </div>
+
+        <div style="background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem;">
+          <h4 style="color:#FFFFFF; font-size:0.95rem; margin-bottom:0.25rem;">Restore from Backup</h4>
+          <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.75rem;">Select a previously exported JSON backup file to restore state.</p>
+          <input type="file" id="backup-file-input" accept=".json" style="font-size:0.85rem;" onchange="App.importBackupFile(this)">
+        </div>
+
+        <div style="background:rgba(244, 63, 94, 0.08); border:1px solid rgba(244, 63, 94, 0.3); border-radius:var(--radius-md); padding:1rem;">
+          <h4 style="color:#F43F5E; font-size:0.95rem; margin-bottom:0.25rem;">Reset All Progress</h4>
+          <p style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.75rem;">Clear LocalStorage and restore the default seed blueprint data.</p>
+          <button class="btn btn-secondary" style="color:#F43F5E; border-color:#F43F5E;" onclick="App.resetAllData()">Reset Baseline Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/data.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
