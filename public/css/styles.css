@@ -2332,4 +2332,166 @@ main.app-body {
   .admin-rank-inputs-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .community-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile & Small Screen Refinements (320px - 640px) */
+@media (max-width: 640px) {
+  html, body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  .container {
+    padding: 0 0.85rem;
+  }
+
+  .main-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    padding-bottom: 0.35rem;
+    scrollbar-width: none;
+  }
+  .main-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .nav-tab {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  .topbar-btn {
+    min-height: 44px;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .btn {
+    min-height: 44px;
+    padding: 0.65rem 1.15rem;
+  }
+
+  .stats-bar {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .hq-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-rank-inputs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rank-tier-card {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  .rank-card-badge-col {
+    display: flex;
+    justify-content: center;
+  }
+
+  .modal-dialog {
+    width: 94vw !important;
+    max-width: 94vw !important;
+    padding: 1.25rem !important;
+    margin: 1rem auto;
+  }
+
+  .dept-nav-pills {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    display: flex;
+    gap: 0.5rem;
+    scrollbar-width: none;
+  }
+  .dept-nav-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .dept-nav-btn {
+    flex-shrink: 0;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .rank-banner-title {
+    font-size: 1.4rem;
+  }
+
+  .brand-strapline {
+    display: none;
+  }
+}
+
+/* Phase 2: Priority Badges, Assessment Banner & Evening Reflection */
+.badge-priority {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.priority-critical {
+  background: rgba(212, 175, 55, 0.15);
+  border: 1px solid var(--border-gold);
+  color: var(--text-gold);
+}
+
+.priority-high {
+  background: rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(249, 115, 22, 0.4);
+  color: #FB923C;
+}
+
+.priority-medium {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  color: var(--accent-blue);
+}
+
+.priority-low {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+}
+
+.hq-assessment-banner {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.hq-assessment-banner:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
+  border-color: var(--gold-light);
+}
+
+.assessment-opt-card {
+  transition: all 0.2s ease;
+}
+
+.assessment-opt-card:hover {
+  border-color: var(--border-gold) !important;
+  transform: translateX(4px);
+}
+
+.assessment-opt-card.selected-opt {
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
 }

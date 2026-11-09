@@ -17,7 +17,7 @@
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
         Audio: On
       </button>
-      <button class="topbar-btn" onclick="App.openAdminModal()" title="Progression & Ledger Administration">
+      <button class="topbar-btn hidden" id="topbar-admin-btn" onclick="App.openAdminModal()" title="Progression & Ledger Administration">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         Admin Suite
       </button>
@@ -59,6 +59,10 @@
         <button class="nav-tab" data-view="profile">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           Performance Record
+        </button>
+        <button class="nav-tab" data-view="community">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Community
         </button>
         <!-- Membership tab temporarily disabled in navigation -->
       </nav>
@@ -230,6 +234,26 @@
         </div>
       </div>
 
+      <!-- Onboarding Baseline Assessment Prompt (Hidden once completed) -->
+      <div id="hq-assessment-banner" class="hq-assessment-banner hidden" onclick="App.openAssessmentModal()" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.15) 0%, rgba(13, 17, 23, 0.95) 100%); border: 1px solid var(--border-gold); border-radius: var(--radius-lg); padding: 1.25rem 1.5rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; gap: 1.25rem; cursor: pointer;">
+        <div style="display:flex; align-items:center; gap: 1rem;">
+          <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(212, 175, 55, 0.15); border: 1px solid var(--border-gold); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: var(--text-gold); flex-shrink: 0;">
+            ⚡
+          </div>
+          <div>
+            <div style="font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: #FFFFFF; margin-bottom: 0.2rem;">
+              Calibrate Your 8-Dimension Starting Baseline
+            </div>
+            <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.4;">
+              Complete your confidential institutional assessment to calibrate your progression radar and unlock targeted challenge roadmaps. (+50 XP)
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="font-size: 0.8rem; padding: 0.45rem 1rem; white-space: nowrap;" onclick="event.stopPropagation(); App.openAssessmentModal();">
+          Begin Calibration
+        </button>
+      </div>
+
       <!-- Quick Metrics Bar -->
       <div class="stats-bar">
         <div class="stat-card stat-gold">
@@ -237,7 +261,7 @@
             <span>Consecutive Streak</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
           </div>
-          <div class="stat-value" id="stat-streak">12 Days</div>
+          <div class="stat-value" id="stat-streak">0 Days</div>
           <div class="stat-sub">Zero zero-days standard</div>
         </div>
 
@@ -246,7 +270,7 @@
             <span>Today's Execution</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 14 10"/></svg>
           </div>
-          <div class="stat-value" id="stat-rate">60%</div>
+          <div class="stat-value" id="stat-rate">0%</div>
           <div class="stat-sub">Objectives fulfilled</div>
         </div>
 
@@ -255,7 +279,7 @@
             <span>Unreal Points</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           </div>
-          <div class="stat-value" id="stat-points">1,250</div>
+          <div class="stat-value" id="stat-points">0</div>
           <div class="stat-sub">Discipline equity accumulated</div>
         </div>
 
@@ -264,7 +288,7 @@
             <span>Milestones Cleared</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <div class="stat-value" id="stat-total-done">142</div>
+          <div class="stat-value" id="stat-total-done">0</div>
           <div class="stat-sub">Lifetime verifiable tasks</div>
         </div>
       </div>
@@ -277,13 +301,34 @@
             <div class="section-head">
               <div class="section-title-wrap">
                 <h2 class="section-title">Today's Objectives</h2>
-                <span class="badge-counter" id="hq-obj-count-badge">3/5 Done</span>
+                <span class="badge-counter" id="hq-obj-count-badge">0/0 Done</span>
               </div>
               <button class="topbar-btn" style="color:var(--text-gold);" onclick="App.openAddObjectiveModal()">+ Add New</button>
             </div>
             <div class="objectives-list" id="hq-objectives-list">
               <!-- Rendered via JS -->
             </div>
+          </div>
+
+          <!-- Daily Evening Discipline Reflection -->
+          <div class="card-section" id="hq-evening-reflection-card" style="border: 1px solid var(--border-gold); margin-bottom: 2rem;">
+            <div class="section-head">
+              <div class="section-title-wrap">
+                <h3 class="section-title" style="font-size: 1.1rem; display: flex; align-items: center; gap: 0.5rem;">
+                  <span>🌙</span> Evening Reflection & Shutdown
+                </h3>
+              </div>
+              <span class="badge-counter" id="hq-reflection-badge">Pending Today</span>
+            </div>
+            <p style="font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.5;">
+              Audit today's execution standard, confront friction points, and pre-commit to tomorrow morning's non-negotiable target. (+25 XP)
+            </p>
+            <div id="hq-reflection-summary" style="display: none; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 0.75rem;">
+              <!-- Dynamic reflection review injected via JS -->
+            </div>
+            <button class="btn btn-outline-gold" id="hq-reflection-btn" onclick="App.openReflectionModal()" style="font-size: 0.82rem; padding: 0.45rem 1rem;">
+              Log Evening Reflection
+            </button>
           </div>
 
           <!-- Active Enrolled Challenges -->
@@ -685,7 +730,165 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 5: MEMBERSHIP (TEMPORARILY DISABLED) -->
+    <!-- VIEW 6: COMMUNITY & ACCOUNTABILITY         -->
+    <!-- ========================================== -->
+    <section id="view-community" class="view-section">
+      <div class="hq-hero">
+        <div class="hq-welcome">
+          <h1>Institutional Community</h1>
+          <p>Iron sharpens iron. Verified reflections, accountability partnerships, and discipline vanguard cohorts.</p>
+        </div>
+      </div>
+
+      <!-- Community Sub-Nav -->
+      <div class="dept-nav-pills" style="margin-bottom: 2rem;">
+        <button class="dept-nav-btn active" id="community-tab-feed" onclick="App.switchCommunityTab('feed')">Institutional Dispatch</button>
+        <button class="dept-nav-btn" id="community-tab-partners" onclick="App.switchCommunityTab('partners')">Accountability Partners</button>
+        <button class="dept-nav-btn" id="community-tab-cohorts" onclick="App.switchCommunityTab('cohorts')">Vanguard Cohorts</button>
+      </div>
+
+      <!-- Subview: Dispatch Feed -->
+      <div id="community-sub-feed" class="community-subview">
+        <div class="community-grid" style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+          <div class="community-main">
+            <!-- Feed Composer -->
+            <div class="card-section" style="margin-bottom: 1.5rem;">
+              <h3 class="section-title" style="font-size: 1.1rem; margin-bottom: 0.75rem;">Post Reflection or Protocol Completion</h3>
+              <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <input type="text" id="community-post-title" class="form-input" placeholder="Core insight, milestone or protocol win..." style="width: 100%;">
+                <textarea id="community-post-content" class="editor-textarea" placeholder="Detail your training, lessons learned, or tactical takeaway..." style="min-height: 90px;"></textarea>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;">
+                  <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <select id="community-post-category" class="form-input" style="padding: 0.4rem 0.6rem; font-size: 0.8rem; width: auto;">
+                      <option value="win">Protocol Win</option>
+                      <option value="reflection">Daily Reflection</option>
+                      <option value="protocol">Syllabus Breakdown</option>
+                      <option value="question">Tactical Query</option>
+                    </select>
+                    <select id="community-post-dept" class="form-input" style="padding: 0.4rem 0.6rem; font-size: 0.8rem; width: auto;">
+                      <option value="execution">Execution</option>
+                      <option value="mind">Mind</option>
+                      <option value="body">Body</option>
+                      <option value="creation">Creation</option>
+                      <option value="growth">Growth</option>
+                      <option value="connection">Connection</option>
+                    </select>
+                  </div>
+                  <button class="btn btn-primary" onclick="App.submitCommunityPost()">Transmit Entry</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Posts Stream -->
+            <div class="section-head" style="margin-bottom: 1rem;">
+              <div class="section-title-wrap">
+                <h3 class="section-title" style="font-size: 1.15rem;">Live Dispatch Stream</h3>
+              </div>
+              <span class="badge-counter" id="community-post-count">Loading...</span>
+            </div>
+            <div id="community-feed-list" style="display: flex; flex-direction: column; gap: 1rem;">
+              <!-- Injected via JS -->
+            </div>
+          </div>
+
+          <!-- Community Sidebar: Standard & Guidelines -->
+          <div class="community-side">
+            <div class="card-section" style="margin-bottom: 1.5rem; border-color: var(--border-gold);">
+              <h4 style="font-family: var(--font-display); font-size: 1rem; color: var(--text-gold); margin-bottom: 0.5rem;">Standard of Discourse</h4>
+              <p style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 0.75rem;">
+                Every transmission must offer concrete signal. Generic platitudes, self-promotion, and superficial noise are purged.
+              </p>
+              <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.8rem; color: var(--text-muted);">
+                <li>⚡ Specific data over vague claims</li>
+                <li>⚡ Failures and course-corrections welcomed</li>
+                <li>⚡ Mutual accountability without coddling</li>
+              </ul>
+            </div>
+
+            <div class="card-section">
+              <h4 style="font-family: var(--font-display); font-size: 1rem; color: #FFFFFF; margin-bottom: 0.75rem;">Active Vanguard</h4>
+              <div style="font-size: 0.82rem; color: var(--text-secondary); line-height: 1.5;">
+                <p>14 Members maintaining >90% protocol completion this week.</p>
+                <div style="margin-top: 1rem;">
+                  <button class="btn btn-outline-gold" style="width: 100%; font-size: 0.8rem; padding: 0.5rem;" onclick="App.openFindPartnerModal()">Request Accountability Partner</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Subview: Accountability Partners -->
+      <div id="community-sub-partners" class="community-subview hidden">
+        <div class="card-section" style="margin-bottom: 1.5rem;">
+          <div class="section-head">
+            <div>
+              <h3 class="section-title">Direct Accountability Pairing</h3>
+              <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                Pair with a dedicated member to cross-verify weekly execution and uphold zero-zero-day consistency.
+              </p>
+            </div>
+            <button class="btn btn-primary" onclick="App.openFindPartnerModal()">+ Find Partner</button>
+          </div>
+          <div id="community-partners-list" style="margin-top: 1rem;">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Subview: Cohorts -->
+      <div id="community-sub-cohorts" class="community-subview hidden">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.5rem;">
+          <div class="card-section" style="border: 1px solid var(--border-subtle);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <span class="badge-counter" style="color: var(--accent-emerald);">Active Cohort</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Daily • 06:00 AM</span>
+            </div>
+            <h3 style="font-family: var(--font-display); font-size: 1.25rem; color: #FFFFFF; margin-bottom: 0.5rem;">Dawn Patrol (06:00 AM Club)</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem;">
+              Awaken before dawn. Mandatory morning telemetry check-in before the world wakes up. Zero snoozing tolerated.
+            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">18 Enrolled</span>
+              <button class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;" onclick="App.joinCohort('dawn-patrol')">Enrolled</button>
+            </div>
+          </div>
+
+          <div class="card-section" style="border: 1px solid var(--border-subtle);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <span class="badge-counter" style="color: var(--text-gold);">High Intensity</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">75 Consecutive Days</span>
+            </div>
+            <h3 style="font-family: var(--font-display); font-size: 1.25rem; color: #FFFFFF; margin-bottom: 0.5rem;">75-Day Hard Protocol Cohort</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem;">
+              Rigorous physical conditioning, zero alcohol, 4 liters water, 10 pages non-fiction reading daily. Miss one item and reset to day 1.
+            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">26 Enrolled</span>
+              <button class="btn btn-outline-gold" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;" onclick="App.joinCohort('75-hard')">Join Cohort</button>
+            </div>
+          </div>
+
+          <div class="card-section" style="border: 1px solid var(--border-subtle);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">
+              <span class="badge-counter" style="color: var(--accent-purple);">Deep Focus</span>
+              <span style="font-size: 0.75rem; color: var(--text-muted);">Weekly Review</span>
+            </div>
+            <h3 style="font-family: var(--font-display); font-size: 1.25rem; color: #FFFFFF; margin-bottom: 0.5rem;">The Monastic Builders</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin-bottom: 1rem;">
+              Founders, writers, and engineers dedicated to 20+ hours of deep, uninterrupted creative output each week.
+            </p>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.75rem;">
+              <span style="font-size: 0.8rem; color: var(--text-muted);">12 Enrolled</span>
+              <button class="btn btn-outline-gold" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;" onclick="App.joinCohort('monastic-builders')">Join Cohort</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VIEW 7: MEMBERSHIP (TEMPORARILY DISABLED) -->
     <!-- ========================================== -->
     <section id="view-membership" class="view-section">
       <div class="membership-disabled-banner">
@@ -768,22 +971,39 @@
       </div>
 
       <div class="form-group">
-        <label class="form-label">Target Dimension</label>
+        <label class="form-label" for="new-obj-dimension">Target Dimension</label>
         <select id="new-obj-dimension" class="form-select">
           <option value="execution">Execution / Discipline</option>
-          <option value="physical">Physical Health</option>
-          <option value="intellectual">Intellectual</option>
-          <option value="creative">Creative Expression</option>
-          <option value="professional">Professional Competence</option>
+          <option value="physical">Physical Health & Recovery</option>
+          <option value="intellectual">Intellectual & Reading</option>
+          <option value="creative">Creative Expression & Writing</option>
+          <option value="professional">Professional Craft & Focus</option>
           <option value="emotional">Emotional Resilience</option>
-          <option value="social">Social & Relationships</option>
-          <option value="financial">Financial Capability</option>
+          <option value="social">Social & Communication</option>
+          <option value="financial">Financial Literacy & Wealth</option>
         </select>
       </div>
 
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+        <div class="form-group">
+          <label class="form-label" for="new-obj-priority">Priority Level</label>
+          <select id="new-obj-priority" class="form-select">
+            <option value="critical">⚡ Critical / #1 Focus (+30 XP)</option>
+            <option value="high">🔥 High Priority (+20 XP)</option>
+            <option value="medium" selected>Standard Priority (+15 XP)</option>
+            <option value="low">Subtle / Low Priority (+10 XP)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="new-obj-due">Due Window</label>
+          <input type="text" id="new-obj-due" class="form-input" placeholder="e.g. 07:00 AM or Morning" value="Today">
+        </div>
+      </div>
+
       <div class="form-group">
-        <label class="form-label">Estimated Time Commitment</label>
-        <input type="text" id="new-obj-time" class="form-input" placeholder="e.g. 30m">
+        <label class="form-label" for="new-obj-time">Estimated Time Commitment</label>
+        <input type="text" id="new-obj-time" class="form-input" placeholder="e.g. 30m" value="25m">
       </div>
 
       <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
@@ -921,7 +1141,7 @@
           <h3 style="font-family: var(--font-display); font-size: 1.5rem; color: #FFFFFF;">Admin Progression & Ledger Suite</h3>
         </div>
         <div style="display:flex; align-items:center; gap:0.5rem;">
-          <input type="password" id="admin-key-input" class="form-input" placeholder="Admin Secret Key" style="width: 160px; font-size: 0.75rem; padding: 0.35rem 0.6rem;" value="egym_admin_2026">
+          <input type="password" id="admin-key-input" class="form-input" placeholder="Admin Secret Key" style="width: 160px; font-size: 0.75rem; padding: 0.35rem 0.6rem;" value="">
           <button class="btn btn-secondary" onclick="App.refreshAdminSuite()" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">Sync Data</button>
         </div>
       </div>
@@ -970,6 +1190,82 @@
           <!-- Injected via JS -->
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal: Request Accountability Partner -->
+  <div class="modal-overlay" id="partner-modal">
+    <div class="modal-dialog" style="max-width: 520px;">
+      <button class="modal-close-btn" onclick="App.closeModal('partner-modal')">&times;</button>
+      <h3 style="font-family: var(--font-display); font-size: 1.4rem; color: #FFFFFF; margin-bottom: 0.5rem;">Accountability Partnership</h3>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem;">
+        Pledge your weekly discipline contract. Both partners commit to verifying each other's protocol completions.
+      </p>
+      <form onsubmit="event.preventDefault(); App.submitPartnerRequest();" style="display:flex; flex-direction:column; gap:1rem;">
+        <div>
+          <label class="form-label" for="partner-focus-dept">Primary Focus Dimension</label>
+          <select id="partner-focus-dept" class="form-input" style="width:100%;">
+            <option value="execution">Execution & Daily Objectives</option>
+            <option value="body">Physical Conditioning & Fitness</option>
+            <option value="mind">Intellectual & Reading Mastery</option>
+            <option value="creation">Writing & Creative Output</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" for="partner-pledge">Your Accountability Pledge</label>
+          <textarea id="partner-pledge" class="editor-textarea" style="min-height:80px;" placeholder="I commit to check in every evening by 21:00 with proof of daily execution..." required></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('partner-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Transmit Partner Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: 8-Dimension Onboarding Assessment -->
+  <div class="modal-overlay" id="assessment-modal">
+    <div class="modal-dialog" style="max-width: 680px; max-height: 90vh; overflow-y: auto;">
+      <button class="modal-close-btn" onclick="App.closeModal('assessment-modal')">&times;</button>
+      <div id="assessment-wizard-content">
+        <!-- Rendered via JS App.renderAssessmentWizard() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Daily Evening Reflection & Shutdown -->
+  <div class="modal-overlay" id="reflection-modal">
+    <div class="modal-dialog" style="max-width: 580px;">
+      <button class="modal-close-btn" onclick="App.closeModal('reflection-modal')">&times;</button>
+      <div style="display:flex; align-items:center; gap:0.6rem; margin-bottom: 0.5rem;">
+        <span style="font-size:1.4rem;">🌙</span>
+        <h3 style="font-family: var(--font-display); font-size: 1.4rem; color: #FFFFFF;">Daily Evening Reflection</h3>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 1.25rem; line-height: 1.5;">
+        Audit today's execution standard with unsparing honesty. Close out mental loops before digital boundary shutdown. (+25 XP)
+      </p>
+
+      <form onsubmit="event.preventDefault(); App.submitEveningReflection();" style="display:flex; flex-direction:column; gap:1rem;">
+        <div>
+          <label class="form-label" for="refl-win">1. What was your #1 discipline or execution win today?</label>
+          <input type="text" id="refl-win" class="form-input" placeholder="e.g. Cleared 90m deep work sprint before opening messages" required style="width:100%;">
+        </div>
+
+        <div>
+          <label class="form-label" for="refl-friction">2. Where did friction, avoidance, or distraction appear?</label>
+          <textarea id="refl-friction" class="editor-textarea" style="min-height:70px;" placeholder="e.g. Lingered on phone 15 mins after lunch; will leave device in drawer tomorrow" required></textarea>
+        </div>
+
+        <div>
+          <label class="form-label" for="refl-tomorrow">3. Single non-negotiable target for tomorrow morning?</label>
+          <input type="text" id="refl-tomorrow" class="form-input" placeholder="e.g. 45m physical conditioning + complete strategic proposal draft" required style="width:100%;">
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.5rem;">
+          <button type="button" class="btn btn-secondary" onclick="App.closeModal('reflection-modal')">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-gold-radiant">Record Reflection (+25 XP)</button>
+        </div>
+      </form>
     </div>
   </div>
 

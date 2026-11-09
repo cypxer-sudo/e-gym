@@ -317,6 +317,105 @@ const EGYM_DATA = {
       ],
       cta: "Apply for Elite"
     }
+  ],
+
+  assessmentQuestions: [
+    {
+      dimensionId: "physical",
+      dimensionName: "Physical Dimension",
+      prompt: "How consistent is your physical conditioning, recovery, and daily nutrition?",
+      options: [
+        { score: 20, label: "Sedentary, irregular sleep, low physical energy." },
+        { score: 35, label: "Inconsistent workouts (1-2x/week), fluctuating sleep quality." },
+        { score: 50, label: "Moderate routine (3x/week), decent hydration and recovery." },
+        { score: 65, label: "Disciplined training (4-5x/week), tracked sleep, structured nutrition." },
+        { score: 80, label: "Uncompromising athletic baseline, dialed mobility, peak recovery." }
+      ]
+    },
+    {
+      dimensionId: "intellectual",
+      dimensionName: "Intellectual Dimension",
+      prompt: "How disciplined is your non-fiction reading and deliberate knowledge acquisition?",
+      options: [
+        { score: 20, label: "Rarely read non-fiction, cognitive intake mostly social media / feeds." },
+        { score: 35, label: "Read occasionally, but lack retention and notes." },
+        { score: 50, label: "Consistent reader (1 book/month), extract key highlights." },
+        { score: 65, label: "Daily 20+ min reading habit, active marginalia and concept synthesis." },
+        { score: 80, label: "Aggressive multi-disciplinary intake, systematic notes, applied frameworks." }
+      ]
+    },
+    {
+      dimensionId: "emotional",
+      dimensionName: "Emotional Dimension",
+      prompt: "How effectively do you manage stress, setbacks, and maintain calm under pressure?",
+      options: [
+        { score: 20, label: "Easily overwhelmed, reactive to friction, slow to recover composure." },
+        { score: 35, label: "Moderate reactivity, struggle during high-stakes friction." },
+        { score: 50, label: "Generally calm, able to reset after minor daily stressors." },
+        { score: 65, label: "High self-regulation, tactical pause before responding to adversity." },
+        { score: 80, label: "Stoic composure, antifragile under crisis, clear emotional discernment." }
+      ]
+    },
+    {
+      dimensionId: "psychological",
+      dimensionName: "Psychological Dimension",
+      prompt: "How strong is your willpower against digital distractions and procrastination?",
+      options: [
+        { score: 20, label: "Compulsive phone checking, constant task-switching, high brain fog." },
+        { score: 35, label: "Frequent distractions derail planned deep work sessions." },
+        { score: 50, label: "Can focus for 45-min blocks when deadlines approach." },
+        { score: 65, label: "Strong digital boundaries, 90-min uninterrupted deep work blocks." },
+        { score: 80, label: "Monastic focus discipline, zero unintentional screen time." }
+      ]
+    },
+    {
+      dimensionId: "social",
+      dimensionName: "Social Dimension",
+      prompt: "How clear, authentic, and mutually accountable are your relationships and communication?",
+      options: [
+        { score: 20, label: "Conflict-avoidant, superficial network, minimal constructive feedback." },
+        { score: 35, label: "Hesitant in tough conversations, infrequent peer challenge." },
+        { score: 50, label: "Decent communicator, reliable circle of peers." },
+        { score: 65, label: "Direct, high-empathy communication, active accountability partners." },
+        { score: 80, label: "Exceptional leadership, inspiring standards in peers, zero passive aggression." }
+      ]
+    },
+    {
+      dimensionId: "financial",
+      dimensionName: "Financial Dimension",
+      prompt: "How disciplined is your capital allocation, budgeting, and financial growth roadmap?",
+      options: [
+        { score: 20, label: "No budget, impulsive expenses, zero emergency reserve." },
+        { score: 35, label: "Aware of expenses but save erratically." },
+        { score: 50, label: "Consistent savings rate, emergency fund intact, basic investing." },
+        { score: 65, label: "Disciplined capital allocation, multiple income streams, tracked net worth." },
+        { score: 80, label: "Asymmetric wealth creation, deep financial literacy, strategic risk management." }
+      ]
+    },
+    {
+      dimensionId: "professional",
+      dimensionName: "Professional Dimension",
+      prompt: "How high is your leverage and craft mastery in your primary domain or career?",
+      options: [
+        { score: 20, label: "Stagnant, reactive task execution, unclear advancement roadmap." },
+        { score: 35, label: "Competent at assigned tasks, but slow to develop high-leverage skills." },
+        { score: 50, label: "Reliable operator, solid domain execution and professional standing." },
+        { score: 65, label: "Top-tier execution speed, proactive problem-solver, recognized leverage." },
+        { score: 80, label: "Indispensable craft master, high-stakes decision-maker, exponential impact." }
+      ]
+    },
+    {
+      dimensionId: "creative",
+      dimensionName: "Creative Dimension",
+      prompt: "How consistently do you produce visible work, write, or build tangible projects?",
+      options: [
+        { score: 20, label: "All consumption, zero creation. Thoughts never made visible." },
+        { score: 35, label: "Many ideas, but rarely complete or publish drafts/projects." },
+        { score: 50, label: "Occasional writing or building (1-2 projects per quarter)." },
+        { score: 65, label: "Weekly creation routine (published essays, code, designs, or products)." },
+        { score: 80, label: "Prolific high-quality output, rapid shipping cycle, distinct voice." }
+      ]
+    }
   ]
 };
 
@@ -349,11 +448,14 @@ const INITIAL_MEMBER_STATE = {
     professional: 50,
     creative: 50
   },
+  assessmentCompleted: false,
+  assessment: null,
+  eveningReflections: [],
   enrolledChallenges: [],
   todayObjectives: [
-    { id: "starter-1", title: "Enroll in your first flagship challenge in the Challenge Arena", dimension: "execution", completed: false, timeEst: "5m" },
-    { id: "starter-2", title: "Explore the Reading Academy roadmaps in Departments", dimension: "intellectual", completed: false, timeEst: "10m" },
-    { id: "starter-3", title: "Set today's primary deep work block", dimension: "professional", completed: false, timeEst: "25m" }
+    { id: "starter-1", title: "Complete your 8-Dimension Baseline Calibration", dimension: "psychological", priority: "critical", completed: false, timeEst: "5m", dueTime: "Morning", postponedCount: 0 },
+    { id: "starter-2", title: "Enroll in your first flagship challenge in the Challenge Arena", dimension: "execution", priority: "high", completed: false, timeEst: "10m", dueTime: "Midday", postponedCount: 0 },
+    { id: "starter-3", title: "Set today's primary deep work block", dimension: "professional", priority: "medium", completed: false, timeEst: "45m", dueTime: "14:00", postponedCount: 0 }
   ],
   readingLog: [],
   workoutLog: [],
@@ -365,5 +467,7 @@ const INITIAL_MEMBER_STATE = {
   rankHistory: [
     { rankId: "recruit", promotedAt: "2026-11-09T00:00:00.000Z", triggerReason: "Initial Candidate Enrollment" }
   ],
-  xpLedger: []
+  xpLedger: [],
+  communityPosts: [],
+  accountabilityPartners: []
 };

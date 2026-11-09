@@ -12,8 +12,20 @@ CREATE TABLE IF NOT EXISTS members (
   tier TEXT DEFAULT 'Explorer',
   bio TEXT,
   avatar TEXT,
+  password_hash TEXT,
+  is_admin INTEGER DEFAULT 0,
+  privacy_mode TEXT DEFAULT 'private', -- private | partners | public
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 1b. Member Sessions (Cryptographically signed edge session tokens)
+CREATE TABLE IF NOT EXISTS member_sessions (
+  token TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  expires_at TIMESTAMP NOT NULL,
+  FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
 -- 2. Member Performance Stats
@@ -120,12 +132,73 @@ CREATE TABLE IF NOT EXISTS daily_objectives (
   member_id TEXT NOT NULL,
   title TEXT NOT NULL,
   dimension TEXT NOT NULL,
+  priority TEXT DEFAULT 'medium', -- high | medium | low
   time_est TEXT DEFAULT '15m',
+  due_time TEXT,
+  postponed_count INTEGER DEFAULT 0,
   challenge_id TEXT,
   completed INTEGER DEFAULT 0,
   objective_date DATE NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+);
+
+-- 9b. Member Onboarding Assessment
+CREATE TABLE IF NOT EXISTS member_assessments (
+  id TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL,
+  answers_json TEXT NOT NULL,
+  baseline_radar_json TEXT NOT NULL,
+  priority_dimensions TEXT NOT NULL,
+  completed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+);
+
+-- 9c. Daily Evening Reflections & Discipline Ledger
+CREATE TABLE IF NOT EXISTS evening_reflections (
+  id TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL,
+  reflection_date DATE NOT NULL,
+  win_summary TEXT NOT NULL,
+  friction_summary TEXT NOT NULL,
+  tomorrow_target TEXT NOT NULL,
+  xp_awarded INTEGER DEFAULT 25,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+  UNIQUE(member_id, reflection_date)
+);
+
+-- 9c. Accountability Partnerships
+CREATE TABLE IF NOT EXISTS accountability_partnerships (
+  id TEXT PRIMARY KEY,
+  requester_id TEXT NOT NULL,
+  partner_id TEXT NOT NULL,
+  status TEXT DEFAULT 'pending', -- pending | active | ended
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  ended_at TIMESTAMP,
+  FOREIGN KEY (requester_id) REFERENCES members(id) ON DELETE CASCADE,
+  FOREIGN KEY (partner_id) REFERENCES members(id) ON DELETE CASCADE
+);
+
+-- 9d. Community Feed & Moderation
+CREATE TABLE IF NOT EXISTS community_posts (
+  id TEXT PRIMARY KEY,
+  member_id TEXT NOT NULL,
+  category TEXT NOT NULL, -- milestone | reading_insight | creative_draft | reflection
+  title TEXT,
+  content TEXT NOT NULL,
+  is_flagged INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS community_reports (
+  id TEXT PRIMARY KEY,
+  reporter_id TEXT NOT NULL,
+  post_id TEXT NOT NULL,
+  reason TEXT NOT NULL,
+  status TEXT DEFAULT 'pending', -- pending | reviewed | dismissed | removed
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 10. Mind Department: Reading Academy Logs

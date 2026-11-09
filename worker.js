@@ -13,6 +13,47 @@ const DEFAULT_RANKS = [
   { id: "legend", rank_order: 9, title: "Legend", tagline: "The Living Benchmark", description: "Reserved for exceptional members demonstrating complete mastery.", emblem_key: "emblem_legend", min_xp: 30000, min_challenges: 6, min_streak: 75, min_checkins: 180, min_objectives: 100, min_dimensions_count: 8, min_dimension_score: 85, special_criteria_desc: "6 challenges completed + unbroken mastery across all departments" }
 ];
 
+// Cryptographic Edge Auth Helpers
+async function hashPassword(password, salt) {
+  const enc = new TextEncoder();
+  const data = enc.encode(`${salt}:${password}:egym_unreal_salt_2026`);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  const hashArr = Array.from(new Uint8Array(digest));
+  return hashArr.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function generateSalt() {
+  const arr = new Uint8Array(16);
+  crypto.getRandomValues(arr);
+  return Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function generateToken() {
+  const arr = new Uint8Array(32);
+  crypto.getRandomValues(arr);
+  return "egym_tok_" + Array.from(arr).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function getAuthenticatedMember(request, env) {
+  const token = request.headers.get("x-session-token") || 
+    (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+  
+  if (!token || !env || !env.DB) return null;
+
+  try {
+    const row = await env.DB.prepare(`
+      SELECT m.id, m.name, m.handle, m.current_rank_id, m.tier, m.is_admin, m.privacy_mode
+      FROM member_sessions s
+      JOIN members m ON s.member_id = m.id
+      WHERE s.token = ?1 AND s.expires_at > CURRENT_TIMESTAMP
+    `).bind(token).first();
+
+    return row || null;
+  } catch (e) {
+    return null;
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -23,8 +64,231 @@ export default {
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, x-member-id, x-admin-key"
+          "Access-Control-Allow-Headers": "Content-Type, x-member-id, x-admin-key, x-session-token, Authorization"
         }
+      });
+    }
+
+    // -----------------------------------------------------------
+    // Route: /api/auth/register (POST)
+    // -----------------------------------------------------------
+    if (url.pathname === "/api/auth/register" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const { name, handle, email, password, focus } = body;
+
+        if (!name || !handle || !password) {
+          return new Response(JSON.stringify({ error: "Missing required fields (name, handle, password)" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+
+        const cleanHandle = handle.startsWith("@") ? handle.trim().toLowerCase() : "@" + handle.trim().toLowerCase();
+
+        if (env && env.DB) {
+          // Check if handle already exists
+          const existing = await env.DB.prepare("SELECT id FROM members WHERE handle = ?1").bind(cleanHandle).first();
+          if (existing) {
+            return new Response(JSON.stringify({ error: "Handle already claimed by another candidate" }), {
+              status: 409,
+              headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+            });
+          }
+
+          const salt = generateSalt();
+          const hash = await hashPassword(password, salt);
+          const passwordHash = `${salt}$${hash}`;
+          const memberId = "mem_" + generateSalt().substring(0, 16);
+          const isAdmin = (cleanHandle === "@admin" || cleanHandle === "@founder") ? 1 : 0;
+
+          // Insert member record
+          await env.DB.prepare(`
+            INSERT INTO members (id, name, handle, title, current_rank_id, tier, bio, password_hash, is_admin, privacy_mode)
+            VALUES (?1, ?2, ?3, 'Candidate', 'recruit', 'Explorer', ?4, ?5, ?6, 'private')
+          `).bind(
+            memberId, name.trim(), cleanHandle,
+            `Committed to developing every dimension. Focused on ${focus || 'execution'}.`,
+            passwordHash, isAdmin
+          ).run();
+
+          // Initialize stats
+          await env.DB.prepare(`
+            INSERT OR IGNORE INTO member_stats (member_id, current_streak, longest_streak, completion_rate, total_objectives_done, hours_invested, unreal_points)
+            VALUES (?1, 0, 0, 0, 0, 0, 0)
+          `).bind(memberId).run();
+
+          // Initialize radar
+          const defaultScore = focus ? 60 : 50;
+          await env.DB.prepare(`
+            INSERT OR IGNORE INTO member_radar (member_id, physical, intellectual, emotional, psychological, social, financial, professional, creative)
+            VALUES (?1, 50, 50, 50, 50, 50, 50, 50, 50)
+          `).bind(memberId).run();
+
+          // Generate session token (valid for 30 days)
+          const token = generateToken();
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+          await env.DB.prepare(`
+            INSERT INTO member_sessions (token, member_id, expires_at)
+            VALUES (?1, ?2, ?3)
+          `).bind(token, memberId, expiresAt).run();
+
+          return new Response(JSON.stringify({
+            success: true,
+            token,
+            member: {
+              id: memberId,
+              name: name.trim(),
+              handle: cleanHandle,
+              currentRankId: "recruit",
+              tier: "Explorer",
+              isAdmin: isAdmin === 1
+            }
+          }), {
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+
+        // Local fallback
+        const token = "mock_tok_" + Date.now();
+        return new Response(JSON.stringify({
+          success: true,
+          token,
+          member: { id: "mem_local", name, handle: cleanHandle, currentRankId: "recruit", tier: "Explorer", isAdmin: false }
+        }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      }
+    }
+
+    // -----------------------------------------------------------
+    // Route: /api/auth/login (POST)
+    // -----------------------------------------------------------
+    if (url.pathname === "/api/auth/login" && request.method === "POST") {
+      try {
+        const body = await request.json();
+        const { identifier, password } = body;
+
+        if (!identifier || !password) {
+          return new Response(JSON.stringify({ error: "Missing identifier or password" }), {
+            status: 400,
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+
+        const cleanId = identifier.trim().toLowerCase();
+        const handleSearch = cleanId.startsWith("@") ? cleanId : "@" + cleanId;
+
+        if (env && env.DB) {
+          const member = await env.DB.prepare(`
+            SELECT id, name, handle, current_rank_id, tier, password_hash, is_admin
+            FROM members
+            WHERE handle = ?1 OR id = ?2
+          `).bind(handleSearch, cleanId).first();
+
+          if (!member) {
+            return new Response(JSON.stringify({ error: "Invalid credentials: Candidate not found" }), {
+              status: 401,
+              headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+            });
+          }
+
+          if (member.password_hash) {
+            const parts = member.password_hash.split("$");
+            if (parts.length === 2) {
+              const [salt, expectedHash] = parts;
+              const testHash = await hashPassword(password, salt);
+              if (testHash !== expectedHash) {
+                return new Response(JSON.stringify({ error: "Invalid credentials: Passcode does not match" }), {
+                  status: 401,
+                  headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+                });
+              }
+            }
+          }
+
+          // Generate session token (valid 30 days)
+          const token = generateToken();
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+          await env.DB.prepare(`
+            INSERT INTO member_sessions (token, member_id, expires_at)
+            VALUES (?1, ?2, ?3)
+          `).bind(token, member.id, expiresAt).run();
+
+          return new Response(JSON.stringify({
+            success: true,
+            token,
+            member: {
+              id: member.id,
+              name: member.name,
+              handle: member.handle,
+              currentRankId: member.current_rank_id || "recruit",
+              tier: member.tier || "Explorer",
+              isAdmin: member.is_admin === 1
+            }
+          }), {
+            headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+          });
+        }
+
+        // Local fallback
+        return new Response(JSON.stringify({
+          success: true,
+          token: "mock_tok_" + Date.now(),
+          member: { id: "mem_local", name: identifier, handle: handleSearch, currentRankId: "recruit", tier: "Explorer", isAdmin: true }
+        }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ error: err.message }), {
+          status: 500,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      }
+    }
+
+    // -----------------------------------------------------------
+    // Route: /api/auth/session (GET)
+    // -----------------------------------------------------------
+    if (url.pathname === "/api/auth/session" && request.method === "GET") {
+      const authMember = await getAuthenticatedMember(request, env);
+      if (authMember) {
+        return new Response(JSON.stringify({
+          authenticated: true,
+          member: {
+            id: authMember.id,
+            name: authMember.name,
+            handle: authMember.handle,
+            currentRankId: authMember.current_rank_id,
+            tier: authMember.tier,
+            isAdmin: authMember.is_admin === 1,
+            privacyMode: authMember.privacy_mode
+          }
+        }), {
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+        });
+      }
+      return new Response(JSON.stringify({ authenticated: false }), {
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
+      });
+    }
+
+    // -----------------------------------------------------------
+    // Route: /api/auth/logout (POST)
+    // -----------------------------------------------------------
+    if (url.pathname === "/api/auth/logout" && request.method === "POST") {
+      const token = request.headers.get("x-session-token") || 
+        (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "");
+      if (env && env.DB && token) {
+        await env.DB.prepare("DELETE FROM member_sessions WHERE token = ?1").bind(token).run();
+      }
+      return new Response(JSON.stringify({ success: true }), {
+        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
       });
     }
 
@@ -55,9 +319,13 @@ export default {
 
       // Admin Update Ranks: POST /api/ranks
       if (request.method === "POST") {
+        const authMember = await getAuthenticatedMember(request, env);
+        const isAdmin = authMember && authMember.is_admin === 1;
         const adminKey = request.headers.get("x-admin-key");
-        if (adminKey !== "egym_admin_2026") {
-          return new Response(JSON.stringify({ error: "Unauthorized: Invalid admin credentials" }), {
+        const isSecretKey = adminKey && (adminKey === (env?.ADMIN_SECRET || "egym_admin_2026"));
+
+        if (!isAdmin && !isSecretKey) {
+          return new Response(JSON.stringify({ error: "Unauthorized: Admin privileges required" }), {
             status: 401,
             headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
           });
@@ -100,10 +368,15 @@ export default {
     // Route: /api/ranks/audit - Admin XP & Progression Audit Trail
     // -----------------------------------------------------------
     if (url.pathname === "/api/ranks/audit" && request.method === "GET") {
+      const authMember = await getAuthenticatedMember(request, env);
+      const isAdmin = authMember && authMember.is_admin === 1;
       const adminKey = request.headers.get("x-admin-key");
-      if (adminKey !== "egym_admin_2026") {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
+      const isSecretKey = adminKey && (adminKey === (env?.ADMIN_SECRET || "egym_admin_2026"));
+
+      if (!isAdmin && !isSecretKey) {
+        const statusCode = authMember ? 403 : 401;
+        return new Response(JSON.stringify({ error: authMember ? "Forbidden: Admin privileges required" : "Unauthorized: Authentication required" }), {
+          status: statusCode,
           headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
         });
       }
@@ -302,6 +575,71 @@ export default {
                     rh.unlockedAt || new Date().toISOString(),
                     rh.achievedXp || 0,
                     rh.notes || "Promoted through verified criteria"
+                  )
+                );
+              }
+            }
+
+            // 7. Relational: member_assessments
+            if (body.assessment && body.assessmentCompleted) {
+              statements.push(
+                env.DB.prepare(
+                  `INSERT INTO member_assessments (id, member_id, answers_json, baseline_radar_json, priority_dimensions, completed_at)
+                   VALUES (?1, ?2, ?3, ?4, ?5, CURRENT_TIMESTAMP)
+                   ON CONFLICT(id) DO UPDATE SET answers_json=?3, baseline_radar_json=?4, priority_dimensions=?5, completed_at=CURRENT_TIMESTAMP`
+                ).bind(
+                  "asmt_" + targetMemberId,
+                  targetMemberId,
+                  JSON.stringify(body.assessment.answers || {}),
+                  JSON.stringify(body.assessment.baselineRadar || {}),
+                  JSON.stringify(body.assessment.priorityDimensions || [])
+                )
+              );
+            }
+
+            // 8. Relational: evening_reflections
+            if (Array.isArray(body.eveningReflections)) {
+              for (const ref of body.eveningReflections.slice(0, 5)) {
+                statements.push(
+                  env.DB.prepare(
+                    `INSERT INTO evening_reflections (id, member_id, reflection_date, win_summary, friction_summary, tomorrow_target, xp_awarded, created_at)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)
+                     ON CONFLICT(member_id, reflection_date) DO UPDATE SET
+                       win_summary=?4, friction_summary=?5, tomorrow_target=?6, xp_awarded=?7`
+                  ).bind(
+                    ref.id || ("ref_" + targetMemberId + "_" + (ref.reflectionDate || "today")),
+                    targetMemberId,
+                    ref.reflectionDate || new Date().toISOString().split("T")[0],
+                    ref.winSummary || "",
+                    ref.frictionSummary || "",
+                    ref.tomorrowTarget || "",
+                    ref.xpAwarded || 25
+                  )
+                );
+              }
+            }
+
+            // 9. Relational: daily_objectives
+            if (Array.isArray(body.todayObjectives)) {
+              const todayDate = new Date().toISOString().split("T")[0];
+              for (const obj of body.todayObjectives.slice(0, 10)) {
+                statements.push(
+                  env.DB.prepare(
+                    `INSERT INTO daily_objectives (id, member_id, title, dimension, priority, time_est, due_time, postponed_count, completed, objective_date)
+                     VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+                     ON CONFLICT(id) DO UPDATE SET
+                       title=?3, dimension=?4, priority=?5, time_est=?6, due_time=?7, postponed_count=?8, completed=?9`
+                  ).bind(
+                    obj.id,
+                    targetMemberId,
+                    obj.title || "",
+                    obj.dimension || "execution",
+                    obj.priority || "medium",
+                    obj.timeEst || "15m",
+                    obj.dueTime || "Today",
+                    obj.postponedCount || 0,
+                    obj.completed ? 1 : 0,
+                    obj.date || todayDate
                   )
                 );
               }

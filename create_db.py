@@ -25,6 +25,23 @@ def init_database():
     cursor = conn.cursor()
     cursor.executescript(schema_sql)
 
+    # Apply additive migrations to existing tables safely
+    def safe_add_column(table, column_def):
+        col_name = column_def.split()[0]
+        cursor.execute(f"PRAGMA table_info({table})")
+        existing_cols = [c[1] for c in cursor.fetchall()]
+        if col_name not in existing_cols:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN {column_def}")
+            print(f"  + Added column {col_name} to {table}")
+
+    safe_add_column("members", "current_rank_id TEXT DEFAULT 'recruit'")
+    safe_add_column("members", "password_hash TEXT")
+    safe_add_column("members", "is_admin INTEGER DEFAULT 0")
+    safe_add_column("members", "privacy_mode TEXT DEFAULT 'private'")
+    safe_add_column("daily_objectives", "priority TEXT DEFAULT 'medium'")
+    safe_add_column("daily_objectives", "due_time TEXT")
+    safe_add_column("daily_objectives", "postponed_count INTEGER DEFAULT 0")
+
     # Seed default ranks
     cursor.executemany("""
         INSERT OR REPLACE INTO ranks_config 

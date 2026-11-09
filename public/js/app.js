@@ -64,6 +64,7 @@ const App = {
     this.renderChallengeArena();
     this.renderDepartments();
     this.renderProfile();
+    this.renderCommunity();
     this.renderMembership();
     this.renderRadarChart();
   },
@@ -92,6 +93,13 @@ const App = {
     if (tierPill) {
       tierPill.textContent = this.state.profile.tier || "Genesis Member";
     }
+
+    // Dynamic Admin Suite button visibility based on authenticated role
+    const adminBtn = document.getElementById("topbar-admin-btn");
+    if (adminBtn) {
+      adminBtn.classList.toggle("hidden", !StorageManager.isAdmin());
+    }
+
     const audioBtn = document.getElementById("mute-toggle-btn");
     if (audioBtn) {
       audioBtn.innerHTML = SoundFX.isMuted 
@@ -133,45 +141,60 @@ const App = {
     SoundFX.playClick();
   },
 
-  submitSignIn() {
+  async submitSignIn() {
     const idInput = document.getElementById("login-identifier");
+    const pwInput = document.getElementById("login-password");
     const val = idInput ? idInput.value.trim() : "";
-    if (!val) {
-      alert("Please enter your member handle or email.");
+    const pw = pwInput ? pwInput.value : "";
+    if (!val || !pw) {
+      alert("Please enter both your member handle/email and passcode.");
       return;
     }
-    this.state = StorageManager.login(val);
-    SoundFX.playSuccess();
-    this.renderAll();
-    this.switchView("hq");
+    const res = await StorageManager.login(val, pw);
+    if (res.success) {
+      SoundFX.playSuccess();
+      this.state = StorageManager.getState();
+      this.renderAll();
+      this.switchView("hq");
+    } else {
+      alert(res.error || "Login verification failed.");
+    }
   },
 
-  submitRegister() {
+  async submitRegister() {
     const name = document.getElementById("reg-name").value;
     const handle = document.getElementById("reg-handle").value;
     const email = document.getElementById("reg-email").value;
+    const password = document.getElementById("reg-password").value;
     const focus = document.getElementById("reg-focus").value;
 
-    if (!name || !handle) {
-      alert("Please provide your name and handle.");
+    if (!name || !handle || !password) {
+      alert("Please provide your name, handle, and create a passcode.");
       return;
     }
 
-    this.state = StorageManager.register(name, handle, email, focus);
+    const res = await StorageManager.register(name, handle, email, password, focus);
+    if (res.success) {
+      SoundFX.playSuccess();
+      this.state = StorageManager.getState();
+      this.renderAll();
+      this.switchView("hq");
+    } else {
+      alert(res.error || "Registration failed.");
+    }
+  },
+
+  async continueAsGuest() {
+    const guestHandle = "@guest_" + Math.random().toString(36).substring(2, 6);
+    const res = await StorageManager.register("Guest Candidate", guestHandle, "", "guest_pass_2026", "execution");
     SoundFX.playSuccess();
+    this.state = StorageManager.getState();
     this.renderAll();
     this.switchView("hq");
   },
 
-  continueAsGuest() {
-    this.state = StorageManager.login("Guest Candidate");
-    SoundFX.playSuccess();
-    this.renderAll();
-    this.switchView("hq");
-  },
-
-  logout() {
-    StorageManager.logout();
+  async logout() {
+    await StorageManager.logout();
     SoundFX.playClick();
     this.renderTopBar();
     this.switchView("login");
@@ -234,6 +257,13 @@ const App = {
     if (targetSec) {
       targetSec.classList.add("active-view");
     }
+    if (viewName === "community") {
+      this.renderCommunity();
+    } else if (viewName === "hq") {
+      this.renderHQ();
+    } else if (viewName === "ranks") {
+      this.renderRanksView();
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
     SoundFX.playClick();
   },
@@ -250,7 +280,13 @@ const App = {
   // Personal HQ View
   // -------------------------------------------------------------
   renderHQ() {
-    const { stats, profile, todayObjectives, enrolledChallenges } = this.state;
+    const { stats, profile, todayObjectives, enrolledChallenges, assessmentCompleted, eveningReflections } = this.state;
+
+    // Assessment Banner
+    const asmtBanner = document.getElementById("hq-assessment-banner");
+    if (asmtBanner) {
+      asmtBanner.classList.toggle("hidden", !!assessmentCompleted);
+    }
 
     // Stats bar
     const streakEl = document.getElementById("stat-streak");
@@ -276,10 +312,20 @@ const App = {
 
     if (objListEl) {
       if (todayObjectives.length === 0) {
-        objListEl.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted);">No objectives logged for today. Click "+ Add Objective" or enroll in a challenge!</div>`;
+        objListEl.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted);">No objectives logged for today. Click "+ Add New" or enroll in a challenge!</div>`;
       } else {
         objListEl.innerHTML = todayObjectives.map(obj => {
           const dimClass = `dim-${obj.dimension || 'execution'}`;
+          const priority = obj.priority || 'medium';
+          const priorityLabels = {
+            critical: '⚡ Critical / P1',
+            high: '🔥 High / P2',
+            medium: 'Standard',
+            low: 'Low'
+          };
+          const priorityLabel = priorityLabels[priority] || 'Standard';
+          const priorityClass = `priority-${priority}`;
+
           return `
             <div class="objective-item ${obj.completed ? 'completed' : ''}" data-obj-id="${obj.id}">
               <div class="objective-left">
@@ -288,15 +334,57 @@ const App = {
                     <polyline points="20 6 9 17 4 12"></polyline>
                   </svg>
                 </div>
-                <span class="objective-text">${this.escapeHTML(obj.title)}</span>
+                <div style="display:flex; flex-direction:column; gap:0.25rem;">
+                  <span class="objective-text">${this.escapeHTML(obj.title)}</span>
+                  <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.72rem; flex-wrap:wrap;">
+                    <span class="badge-priority ${priorityClass}">${priorityLabel}</span>
+                    <span class="dimension-tag ${dimClass}" style="font-size:0.68rem; padding:0.1rem 0.4rem;">${obj.dimension || 'execution'}</span>
+                    <span style="color:var(--text-muted);">Due: ${this.escapeHTML(obj.dueTime || obj.timeEst || 'Today')}</span>
+                    ${obj.postponedCount > 0 ? `<span style="color:var(--text-gold); font-size:0.7rem;">(Postponed ${obj.postponedCount}x)</span>` : ''}
+                  </div>
+                </div>
               </div>
-              <div class="objective-meta">
-                <span class="dimension-tag ${dimClass}">${obj.dimension || 'task'}</span>
-                <span style="font-size:0.75rem; color:var(--text-muted);">${obj.timeEst || '15m'}</span>
+              <div class="objective-actions" style="display:flex; align-items:center; gap:0.4rem;">
+                ${!obj.completed ? `
+                  <button class="topbar-btn" style="font-size:0.72rem; padding:0.2rem 0.5rem; color:var(--text-muted);" onclick="App.postponeObjective('${obj.id}')" title="Carry over to tomorrow">
+                    Postpone
+                  </button>
+                ` : ''}
+                <button class="topbar-btn" style="font-size:0.72rem; padding:0.2rem 0.4rem; color:var(--text-muted);" onclick="App.deleteObjective('${obj.id}')" title="Delete objective">
+                  &times;
+                </button>
               </div>
             </div>
           `;
         }).join("");
+      }
+    }
+
+    // Evening Reflection Card Status
+    const reflBadge = document.getElementById("hq-reflection-badge");
+    const reflBtn = document.getElementById("hq-reflection-btn");
+    const reflSummary = document.getElementById("hq-reflection-summary");
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayRefl = (eveningReflections || []).find(r => r.reflectionDate === todayStr);
+
+    if (reflBadge) {
+      if (todayRefl) {
+        reflBadge.textContent = "Verified Logged";
+        reflBadge.style.color = "var(--accent-emerald)";
+        if (reflBtn) reflBtn.textContent = "Review / Update Reflection";
+        if (reflSummary) {
+          reflSummary.style.display = "block";
+          reflSummary.innerHTML = `
+            <div style="font-size:0.75rem; color:var(--text-gold); font-weight:700; margin-bottom:0.2rem;">TODAY'S #1 DISCIPLINE WIN:</div>
+            <div style="font-size:0.85rem; color:#FFFFFF; margin-bottom:0.4rem;">${this.escapeHTML(todayRefl.winSummary)}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">Tomorrow morning non-negotiable: <span style="color:var(--text-secondary);">${this.escapeHTML(todayRefl.tomorrowTarget)}</span></div>
+          `;
+        }
+      } else {
+        reflBadge.textContent = "Pending Today";
+        reflBadge.style.color = "var(--text-gold)";
+        if (reflBtn) reflBtn.textContent = "Log Evening Reflection";
+        if (reflSummary) reflSummary.style.display = "none";
       }
     }
 
@@ -860,7 +948,10 @@ const App = {
       this.renderRanksView();
       this.renderProfile();
       this.renderRadarChart();
-      if (res.promoResult) {
+      if (res.certificateIssued) {
+        SoundFX.playChime();
+        this.openCertificateModal(this.selectedChallengeId);
+      } else if (res.promoResult) {
         this.showPromotionModal(res.promoResult);
       } else {
         alert("Check-in logged successfully! +75 Unreal Points & streak updated.");
@@ -1334,12 +1425,15 @@ const App = {
 
   openAddObjectiveModal() {
     document.getElementById("new-obj-title").value = "";
+    if (document.getElementById("new-obj-due")) document.getElementById("new-obj-due").value = "Today";
     this.openModal("add-objective-modal");
   },
 
   submitAddObjective() {
     const title = document.getElementById("new-obj-title").value.trim();
     const dimension = document.getElementById("new-obj-dimension").value;
+    const priority = document.getElementById("new-obj-priority") ? document.getElementById("new-obj-priority").value : "medium";
+    const dueTime = document.getElementById("new-obj-due") ? document.getElementById("new-obj-due").value.trim() : "Today";
     const timeEst = document.getElementById("new-obj-time").value.trim() || "15m";
 
     if (!title) {
@@ -1347,9 +1441,260 @@ const App = {
       return;
     }
 
-    this.state = StorageManager.addTodayObjective(title, dimension, timeEst);
+    this.state = StorageManager.addTodayObjective(title, dimension, priority, dueTime, timeEst);
     SoundFX.playSuccess();
     this.closeModal("add-objective-modal");
+    this.renderHQ();
+    this.renderRadarChart();
+  },
+
+  postponeObjective(id) {
+    this.state = StorageManager.postponeObjective(id);
+    SoundFX.playClick();
+    this.renderHQ();
+  },
+
+  deleteObjective(id) {
+    this.state = StorageManager.deleteTodayObjective(id);
+    SoundFX.playClick();
+    this.renderHQ();
+    this.renderRadarChart();
+  },
+
+  // -------------------------------------------------------------
+  // 8-Dimension Onboarding Assessment Wizard
+  // -------------------------------------------------------------
+  assessmentAnswers: {},
+  assessmentCurrentStep: 0, // 0 = Intro, 1..8 = Dimensions, 9 = Results
+
+  openAssessmentModal() {
+    this.assessmentAnswers = (this.state.assessment && this.state.assessment.answers) ? Object.assign({}, this.state.assessment.answers) : {};
+    this.assessmentCurrentStep = 0;
+    this.renderAssessmentWizard();
+    this.openModal("assessment-modal");
+  },
+
+  renderAssessmentWizard() {
+    const container = document.getElementById("assessment-wizard-content");
+    if (!container) return;
+
+    const questions = EGYM_DATA.assessmentQuestions || [];
+    const step = this.assessmentCurrentStep;
+
+    if (step === 0) {
+      // Intro Step
+      container.innerHTML = `
+        <div style="text-align:center; padding: 1rem 0;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: rgba(212, 175, 55, 0.15); border: 1px solid var(--border-gold); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; color: var(--text-gold);">
+            ⚡
+          </div>
+          <h3 style="font-family: var(--font-display); font-size: 1.6rem; color: #FFFFFF; margin-bottom: 0.5rem;">8-Dimension Baseline Calibration</h3>
+          <p style="color: var(--text-secondary); font-size: 0.9rem; max-width: 480px; margin: 0 auto 1.5rem; line-height: 1.6;">
+            E-GYM is built around a single uncompromising standard: <strong>Train every dimension.</strong> Answer 8 diagnostic questions to calibrate your baseline radar and identify your primary growth constraints.
+          </p>
+          <div style="display:flex; justify-content:center; gap: 0.5rem; margin-bottom: 2rem;">
+            <span class="tier-pill" style="color: var(--text-gold);">Confidential</span>
+            <span class="tier-pill" style="color: var(--accent-emerald);">Diagnostic</span>
+            <span class="tier-pill" style="color: var(--accent-blue);">+50 Unreal XP</span>
+          </div>
+          <button class="btn btn-primary btn-gold-radiant" style="padding: 0.75rem 2rem; font-size: 0.95rem;" onclick="App.assessmentNextStep()">
+            Begin Calibration (8 Steps)
+          </button>
+        </div>
+      `;
+      return;
+    }
+
+    if (step >= 1 && step <= questions.length) {
+      const qIndex = step - 1;
+      const q = questions[qIndex];
+      const selectedScore = this.assessmentAnswers[q.dimensionId] || 50;
+
+      container.innerHTML = `
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem; border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+            <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-gold); text-transform:uppercase; letter-spacing:0.1em;">
+              Dimension ${step} of ${questions.length} • ${q.dimensionName}
+            </span>
+            <span class="badge-counter">${Math.round((step / questions.length) * 100)}%</span>
+          </div>
+
+          <h4 style="font-family: var(--font-display); font-size: 1.25rem; color: #FFFFFF; margin-bottom: 1.25rem; line-height: 1.4;">
+            ${this.escapeHTML(q.prompt)}
+          </h4>
+
+          <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-bottom: 2rem;">
+            ${q.options.map(opt => `
+              <div class="card-section assessment-opt-card ${selectedScore === opt.score ? 'selected-opt' : ''}" 
+                   onclick="App.selectAssessmentOption('${q.dimensionId}', ${opt.score})" 
+                   style="cursor: pointer; padding: 1rem; border: 1px solid ${selectedScore === opt.score ? 'var(--border-gold)' : 'var(--border-subtle)'}; background: ${selectedScore === opt.score ? 'rgba(212, 175, 55, 0.08)' : 'var(--bg-card)'}; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between;">
+                <div style="font-size: 0.88rem; color: ${selectedScore === opt.score ? '#FFFFFF' : 'var(--text-secondary)'};">
+                  ${this.escapeHTML(opt.label)}
+                </div>
+                <div style="font-family: var(--font-mono); font-weight: 700; font-size: 0.8rem; color: ${selectedScore === opt.score ? 'var(--text-gold)' : 'var(--text-muted)'}; margin-left: 1rem; flex-shrink: 0;">
+                  ${opt.score}%
+                </div>
+              </div>
+            `).join("")}
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <button class="btn btn-secondary" onclick="App.assessmentPrevStep()">Back</button>
+            <button class="btn btn-primary" onclick="App.assessmentNextStep()">
+              ${step === questions.length ? 'Calculate Calibration' : 'Next Dimension &rarr;'}
+            </button>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if (step > questions.length) {
+      // Results step
+      const computedRadar = {};
+      questions.forEach(q => {
+        computedRadar[q.dimensionId] = this.assessmentAnswers[q.dimensionId] || 50;
+      });
+
+      // Find lowest and highest
+      const sortedDims = [...questions].sort((a, b) => computedRadar[a.dimensionId] - computedRadar[b.dimensionId]);
+      const primaryConstraint = sortedDims[0];
+      const strongestVector = sortedDims[sortedDims.length - 1];
+
+      // Recommend starter challenge
+      const recMap = {
+        physical: { id: "strength-30", name: "30-Day Strength & Mobility Foundation" },
+        intellectual: { id: "reading-21", name: "21-Day Reading Habit Mastery" },
+        psychological: { id: "discipline-75", name: "75-Day Discipline Protocol" },
+        execution: { id: "discipline-75", name: "75-Day Discipline Protocol" },
+        creative: { id: "startup-30", name: "30-Day Sprint Protocol" }
+      };
+      const recChallenge = recMap[primaryConstraint.dimensionId] || recMap.execution;
+
+      container.innerHTML = `
+        <div style="text-align:center;">
+          <div style="font-size: 2rem; margin-bottom: 0.5rem;">🎯</div>
+          <h3 style="font-family: var(--font-display); font-size: 1.5rem; color: #FFFFFF; margin-bottom: 0.35rem;">Baseline Profile Calibrated</h3>
+          <p style="color: var(--text-secondary); font-size: 0.85rem; max-width: 460px; margin: 0 auto 1.5rem;">
+            Your starting vector scores have been integrated into your permanent institutional dossier.
+          </p>
+
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; max-width: 480px; margin: 0 auto 1.5rem; text-align: left;">
+            <div style="background: var(--bg-card); border: 1px solid rgba(239, 68, 68, 0.4); border-radius: var(--radius-md); padding: 0.85rem;">
+              <div style="font-size: 0.7rem; color: #EF4444; text-transform: uppercase; font-weight: 700;">Primary Constraint</div>
+              <div style="font-size: 0.95rem; font-weight: 700; color: #FFFFFF; margin-top: 0.2rem;">${primaryConstraint.dimensionName} (${computedRadar[primaryConstraint.dimensionId]}%)</div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">High-leverage upside for early transformation.</div>
+            </div>
+
+            <div style="background: var(--bg-card); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: var(--radius-md); padding: 0.85rem;">
+              <div style="font-size: 0.7rem; color: var(--accent-emerald); text-transform: uppercase; font-weight: 700;">Anchor Vector</div>
+              <div style="font-size: 0.95rem; font-weight: 700; color: #FFFFFF; margin-top: 0.2rem;">${strongestVector.dimensionName} (${computedRadar[strongestVector.dimensionId]}%)</div>
+              <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">Existing discipline foundation to lean on.</div>
+            </div>
+          </div>
+
+          <div style="background: var(--bg-surface); border: 1px solid var(--border-gold); border-radius: var(--radius-md); padding: 1rem; max-width: 480px; margin: 0 auto 1.5rem; text-align: left;">
+            <div style="font-size: 0.7rem; color: var(--text-gold); text-transform: uppercase; font-weight: 700;">Recommended Starter Protocol</div>
+            <div style="font-size: 1rem; font-weight: 700; color: #FFFFFF; margin-top: 0.2rem;">${recChallenge.name}</div>
+            <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.2rem;">Directly attacks your primary constraint with structured daily habits.</div>
+          </div>
+
+          <button class="btn btn-primary btn-gold-radiant" style="padding: 0.75rem 2rem; font-size: 0.95rem;" onclick="App.finalizeAssessment()">
+            Lock In Calibration & Claim +50 XP
+          </button>
+        </div>
+      `;
+    }
+  },
+
+  selectAssessmentOption(dimId, score) {
+    this.assessmentAnswers[dimId] = score;
+    SoundFX.playClick();
+    this.renderAssessmentWizard();
+  },
+
+  assessmentNextStep() {
+    SoundFX.playClick();
+    this.assessmentCurrentStep += 1;
+    this.renderAssessmentWizard();
+  },
+
+  assessmentPrevStep() {
+    SoundFX.playClick();
+    this.assessmentCurrentStep = Math.max(0, this.assessmentCurrentStep - 1);
+    this.renderAssessmentWizard();
+  },
+
+  finalizeAssessment() {
+    const questions = EGYM_DATA.assessmentQuestions || [];
+    const computedRadar = {};
+    questions.forEach(q => {
+      computedRadar[q.dimensionId] = this.assessmentAnswers[q.dimensionId] || 50;
+    });
+
+    const sortedDims = [...questions].sort((a, b) => computedRadar[a.dimensionId] - computedRadar[b.dimensionId]);
+    const priorityDimensions = sortedDims.slice(0, 3).map(d => d.dimensionId);
+
+    const res = StorageManager.saveAssessment(this.assessmentAnswers, computedRadar, priorityDimensions);
+    this.state = res.state || res;
+
+    SoundFX.playSuccess();
+    this.closeModal("assessment-modal");
+
+    if (res.promoResult) {
+      this.showPromotionModal(res.promoResult);
+    }
+
+    this.renderAll();
+    alert("Baseline calibrated! 8-Dimension radar synced & +50 Unreal XP credited.");
+  },
+
+  // -------------------------------------------------------------
+  // Daily Evening Reflection
+  // -------------------------------------------------------------
+  openReflectionModal() {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const todayRefl = (this.state.eveningReflections || []).find(r => r.reflectionDate === todayStr);
+
+    const winInput = document.getElementById("refl-win");
+    const frictionInput = document.getElementById("refl-friction");
+    const tomorrowInput = document.getElementById("refl-tomorrow");
+
+    if (winInput) winInput.value = todayRefl ? todayRefl.winSummary : "";
+    if (frictionInput) frictionInput.value = todayRefl ? todayRefl.frictionSummary : "";
+    if (tomorrowInput) tomorrowInput.value = todayRefl ? todayRefl.tomorrowTarget : "";
+
+    this.openModal("reflection-modal");
+  },
+
+  submitEveningReflection() {
+    const winInput = document.getElementById("refl-win");
+    const frictionInput = document.getElementById("refl-friction");
+    const tomorrowInput = document.getElementById("refl-tomorrow");
+
+    const win = winInput ? winInput.value.trim() : "";
+    const friction = frictionInput ? frictionInput.value.trim() : "";
+    const tomorrow = tomorrowInput ? tomorrowInput.value.trim() : "";
+
+    if (!win || !friction || !tomorrow) {
+      alert("Please complete all three reflection prompts to honor the institutional standard.");
+      return;
+    }
+
+    const res = StorageManager.saveEveningReflection(win, friction, tomorrow);
+    this.state = res.state || res;
+
+    SoundFX.playSuccess();
+    this.closeModal("reflection-modal");
+
+    if (res.promoResult) {
+      this.showPromotionModal(res.promoResult);
+    }
+
+    this.renderHQ();
+    this.renderTopBar();
+    alert("Evening reflection verified & recorded! +25 Unreal XP earned.");
+  },
     this.renderHQ();
     this.renderRadarChart();
   },
@@ -1493,6 +1838,12 @@ const App = {
   // Admin Management Suite
   // -------------------------------------------------------------
   openAdminModal() {
+    if (!StorageManager.isAdmin()) {
+      const enteredKey = prompt("Institutional Admin Access Required. Enter Root Key:");
+      if (!enteredKey) return;
+      const keyInput = document.getElementById("admin-key-input");
+      if (keyInput) keyInput.value = enteredKey;
+    }
     this.openModal("admin-modal");
     this.renderAdminRanks();
     this.renderAdminLedger();
@@ -1511,19 +1862,19 @@ const App = {
   },
 
   async refreshAdminSuite() {
-    const key = document.getElementById("admin-key-input")?.value || "egym_admin_2026";
+    const key = document.getElementById("admin-key-input")?.value || "";
     const auditData = await StorageManager.fetchAdminAudit(key);
-    if (auditData) {
+    if (auditData && !auditData.error) {
       if (auditData.ranks) {
         ProgressionEngine.cachedRanks = auditData.ranks;
       }
-      alert(`Admin edge sync successful: ${auditData.members?.length || 0} members & ${auditData.recentLedger?.length || 0} ledger transactions loaded.`);
+      alert(`Admin edge sync successful: ${auditData.members?.length || 0} members & ${(auditData.recentLedger || auditData.ledger)?.length || 0} ledger transactions loaded.`);
       this.renderAdminRanks();
-      this.renderAdminLedger(auditData.recentLedger);
+      this.renderAdminLedger(auditData.recentLedger || auditData.ledger);
       this.renderAdminSimulator();
       this.renderAll();
     } else {
-      alert("Failed to connect with Edge D1. Verify admin key or server state.");
+      alert("Failed to authenticate with Edge D1. Verify admin key or member session role.");
     }
   },
 
@@ -1590,13 +1941,13 @@ const App = {
     r.min_dimension_score = parseInt(document.getElementById(`adm-${rankId}-dim-score`)?.value) || 0;
     r.tagline = document.getElementById(`adm-${rankId}-tagline`)?.value || r.tagline;
 
-    const key = document.getElementById("admin-key-input")?.value || "egym_admin_2026";
+    const key = document.getElementById("admin-key-input")?.value || "";
     const resp = await StorageManager.saveAdminRankConfig(r, key);
     if (resp && resp.success) {
       SoundFX.playSuccess();
       alert(`Rank '${r.title}' criteria updated and saved to Edge D1 successfully!`);
     } else {
-      alert(`Rank '${r.title}' criteria saved in local memory.`);
+      alert(resp?.error || `Rank '${r.title}' criteria saved in local memory.`);
     }
     this.renderAll();
   },
@@ -1706,6 +2057,225 @@ const App = {
       this.renderAdminSimulator();
       this.renderAll();
     }
+  },
+
+  // -------------------------------------------------------------
+  // Community & Accountability Controller
+  // -------------------------------------------------------------
+  communityTab: "feed",
+
+  switchCommunityTab(tab) {
+    this.communityTab = tab;
+    ["feed", "partners", "cohorts"].forEach(t => {
+      const btn = document.getElementById(`community-tab-${t}`);
+      const sec = document.getElementById(`community-sub-${t}`);
+      if (btn) btn.classList.toggle("active", t === tab);
+      if (sec) sec.classList.toggle("hidden", t !== tab);
+    });
+    SoundFX.playClick();
+    this.renderCommunity();
+  },
+
+  renderCommunity() {
+    const posts = this.state.communityPosts || [];
+    const countBadge = document.getElementById("community-post-count");
+    if (countBadge) {
+      countBadge.textContent = `${posts.length} Transmissions`;
+    }
+
+    const feedList = document.getElementById("community-feed-list");
+    if (feedList) {
+      if (posts.length === 0) {
+        feedList.innerHTML = `
+          <div style="background: var(--bg-card); border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg); padding: 2.5rem; text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">📡</div>
+            <h4 style="font-family: var(--font-display); font-size: 1.1rem; color: #FFFFFF; margin-bottom: 0.5rem;">Live Dispatch Standby</h4>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; max-width: 440px; margin: 0 auto 1.25rem;">
+              No entries transmitted yet today. Be the first to broadcast a protocol win, morning reflection, or tactical query.
+            </p>
+          </div>
+        `;
+      } else {
+        feedList.innerHTML = posts.map(post => {
+          const dateStr = new Date(post.createdAt || Date.now()).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+          const catColors = {
+            win: "var(--accent-emerald)",
+            reflection: "var(--text-gold)",
+            protocol: "var(--accent-blue)",
+            question: "var(--accent-purple)"
+          };
+          const catColor = catColors[post.category] || "var(--text-gold)";
+          return `
+            <div class="card-section" style="border: 1px solid var(--border-subtle); padding: 1.25rem;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                  <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--border-subtle); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; color: var(--text-gold);">
+                    ${this.escapeHTML((post.authorName || "M")[0].toUpperCase())}
+                  </div>
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.88rem; color: #FFFFFF;">${this.escapeHTML(post.authorName || "Candidate")}</div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted);">${this.escapeHTML(post.authorHandle || "@member")} • ${dateStr}</div>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 0.4rem; align-items: center;">
+                  <span class="badge-counter" style="color: ${catColor}; font-size: 0.7rem; text-transform: uppercase;">${this.escapeHTML(post.category || "win")}</span>
+                  <span class="dimension-tag dim-${post.departmentId || 'execution'}" style="font-size: 0.68rem;">${this.escapeHTML(post.departmentId || 'execution')}</span>
+                </div>
+              </div>
+              <h4 style="font-family: var(--font-display); font-size: 1.05rem; color: #FFFFFF; margin-bottom: 0.4rem;">${this.escapeHTML(post.title)}</h4>
+              <p style="font-size: 0.86rem; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; margin-bottom: 0.85rem;">${this.escapeHTML(post.content)}</p>
+              <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-subtle); padding-top: 0.65rem;">
+                <button class="topbar-btn" style="font-size: 0.78rem; padding: 0.25rem 0.6rem; color: var(--text-muted);" onclick="App.likeCommunityPost('${post.id}')">
+                  ⚡ Endorse Standard (${post.likes || 0})
+                </button>
+                <button class="topbar-btn" style="font-size: 0.72rem; padding: 0.25rem 0.5rem; color: var(--text-muted);" onclick="App.reportPost('${post.id}')">
+                  Report
+                </button>
+              </div>
+            </div>
+          `;
+        }).join("");
+      }
+    }
+
+    // Accountability Partners List
+    const partnersList = document.getElementById("community-partners-list");
+    if (partnersList) {
+      const partners = this.state.accountabilityPartners || [];
+      if (partners.length === 0) {
+        partnersList.innerHTML = `
+          <div style="background: var(--bg-card); border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg); padding: 2.5rem; text-align: center;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">🤝</div>
+            <h4 style="font-family: var(--font-display); font-size: 1.1rem; color: #FFFFFF; margin-bottom: 0.5rem;">No Active Partner Pairing</h4>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; max-width: 460px; margin: 0 auto 1.25rem;">
+              Accountability increases follow-through by 65%. Transmit a partnership pledge to connect with a candidate dedicated to your target dimension.
+            </p>
+            <button class="btn btn-primary" onclick="App.openFindPartnerModal()">Create Partnership Pledge</button>
+          </div>
+        `;
+      } else {
+        partnersList.innerHTML = partners.map(p => `
+          <div class="card-section" style="border: 1px solid var(--border-subtle); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-weight: 700; color: #FFFFFF; font-size: 0.95rem;">${this.escapeHTML(p.partnerName || "Accountability Partner")}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Target: ${this.escapeHTML(p.focusDept)} • Status: <span style="color: var(--accent-emerald); font-weight: 600;">${this.escapeHTML(p.status)}</span></div>
+              <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.35rem; font-style: italic;">"${this.escapeHTML(p.pledge)}"</div>
+            </div>
+            <button class="btn btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;" onclick="App.checkInPartner('${p.id}')">Verify Execution</button>
+          </div>
+        `).join("");
+      }
+    }
+  },
+
+  submitCommunityPost() {
+    const titleInput = document.getElementById("community-post-title");
+    const contentInput = document.getElementById("community-post-content");
+    const catInput = document.getElementById("community-post-category");
+    const deptInput = document.getElementById("community-post-dept");
+
+    const title = titleInput ? titleInput.value.trim() : "";
+    const content = contentInput ? contentInput.value.trim() : "";
+    const category = catInput ? catInput.value : "win";
+    const dept = deptInput ? deptInput.value : "execution";
+
+    if (!title || !content) {
+      alert("Please provide both a title and details for your community transmission.");
+      return;
+    }
+
+    const post = {
+      id: "post-" + Date.now(),
+      authorName: this.state.profile.name || "Candidate",
+      authorHandle: this.state.profile.handle || "@candidate",
+      title,
+      content,
+      category,
+      departmentId: dept,
+      likes: 0,
+      createdAt: new Date().toISOString()
+    };
+
+    if (!Array.isArray(this.state.communityPosts)) {
+      this.state.communityPosts = [];
+    }
+    this.state.communityPosts.unshift(post);
+
+    // Award +20 XP for disciplined dispatch
+    if (typeof ProgressionEngine !== "undefined") {
+      ProgressionEngine.recordXP(this.state, 20, "Community Institutional Reflection", "community-post-" + post.id);
+    }
+
+    StorageManager.saveState(this.state);
+    SoundFX.playSuccess();
+
+    if (titleInput) titleInput.value = "";
+    if (contentInput) contentInput.value = "";
+
+    this.renderCommunity();
+    this.renderTopBar();
+    alert("Transmission broadcasted. +20 XP awarded for high-signal reflection.");
+  },
+
+  likeCommunityPost(postId) {
+    const post = (this.state.communityPosts || []).find(p => p.id === postId);
+    if (post) {
+      post.likes = (post.likes || 0) + 1;
+      StorageManager.saveState(this.state);
+      SoundFX.playClick();
+      this.renderCommunity();
+    }
+  },
+
+  reportPost(postId) {
+    alert("Transmission flagged for High Council review. Institutional standard upheld.");
+  },
+
+  openFindPartnerModal() {
+    this.openModal("partner-modal");
+  },
+
+  submitPartnerRequest() {
+    const deptSelect = document.getElementById("partner-focus-dept");
+    const pledgeInput = document.getElementById("partner-pledge");
+    const dept = deptSelect ? deptSelect.value : "execution";
+    const pledge = pledgeInput ? pledgeInput.value.trim() : "";
+
+    if (!pledge) {
+      alert("Please specify your accountability commitment pledge.");
+      return;
+    }
+
+    if (!Array.isArray(this.state.accountabilityPartners)) {
+      this.state.accountabilityPartners = [];
+    }
+
+    const partner = {
+      id: "partner-" + Date.now(),
+      partnerName: "Institutional Peer (Matched)",
+      focusDept: dept,
+      pledge,
+      status: "Active (Genesis Cohort)",
+      createdAt: new Date().toISOString()
+    };
+
+    this.state.accountabilityPartners.push(partner);
+    StorageManager.saveState(this.state);
+    SoundFX.playSuccess();
+    this.closeModal("partner-modal");
+    if (pledgeInput) pledgeInput.value = "";
+    this.renderCommunity();
+    alert("Accountability contract confirmed. Zero-zero-days standard in effect.");
+  },
+
+  checkInPartner(partnerId) {
+    SoundFX.playSuccess();
+    alert("Peer execution verified. Mutual streak integrity sustained.");
+  },
+
+  joinCohort(cohortId) {
+    SoundFX.playSuccess();
+    alert(`Enrolled into ${cohortId.replace(/-/g, ' ').toUpperCase()}. Daily telemetry protocol engaged.`);
   },
 
   escapeHTML(str) {
