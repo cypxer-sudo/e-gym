@@ -25,6 +25,13 @@ const App = {
     this.renderAll();
     this.bindGlobalEvents();
 
+    // Check login state
+    if (!StorageManager.isLoggedIn()) {
+      this.switchView("login");
+    } else {
+      this.switchView("hq");
+    }
+
     try {
       const cloudState = await StorageManager.initCloudSync();
       if (cloudState) {
@@ -49,9 +56,17 @@ const App = {
   // Topbar & Header
   // -------------------------------------------------------------
   renderTopBar() {
+    const isLoggedIn = StorageManager.isLoggedIn();
+    const loggedInWrap = document.getElementById("auth-logged-in-wrap");
+    const loggedOutWrap = document.getElementById("auth-logged-out-wrap");
+    if (loggedInWrap && loggedOutWrap) {
+      loggedInWrap.classList.toggle("hidden", !isLoggedIn);
+      loggedOutWrap.classList.toggle("hidden", isLoggedIn);
+    }
+
     const tierPill = document.getElementById("header-tier-pill");
     if (tierPill) {
-      tierPill.textContent = this.state.profile.tier || "Member";
+      tierPill.textContent = this.state.profile.tier || "Genesis Member";
     }
     const audioBtn = document.getElementById("mute-toggle-btn");
     if (audioBtn) {
@@ -69,6 +84,73 @@ const App = {
         this.renderTopBar();
       });
     }
+  },
+
+  // -------------------------------------------------------------
+  // Authentication Controller
+  // -------------------------------------------------------------
+  switchAuthTab(tab) {
+    const signinTab = document.getElementById("tab-btn-signin");
+    const registerTab = document.getElementById("tab-btn-register");
+    const signinForm = document.getElementById("auth-form-signin");
+    const registerForm = document.getElementById("auth-form-register");
+
+    if (tab === "signin") {
+      if (signinTab) signinTab.classList.add("active");
+      if (registerTab) registerTab.classList.remove("active");
+      if (signinForm) signinForm.classList.remove("hidden");
+      if (registerForm) registerForm.classList.add("hidden");
+    } else {
+      if (registerTab) registerTab.classList.add("active");
+      if (signinTab) signinTab.classList.remove("active");
+      if (registerForm) registerForm.classList.remove("hidden");
+      if (signinForm) signinForm.classList.add("hidden");
+    }
+    SoundFX.playClick();
+  },
+
+  submitSignIn() {
+    const idInput = document.getElementById("login-identifier");
+    const val = idInput ? idInput.value.trim() : "";
+    if (!val) {
+      alert("Please enter your member handle or email.");
+      return;
+    }
+    this.state = StorageManager.login(val);
+    SoundFX.playSuccess();
+    this.renderAll();
+    this.switchView("hq");
+  },
+
+  submitRegister() {
+    const name = document.getElementById("reg-name").value;
+    const handle = document.getElementById("reg-handle").value;
+    const email = document.getElementById("reg-email").value;
+    const focus = document.getElementById("reg-focus").value;
+
+    if (!name || !handle) {
+      alert("Please provide your name and handle.");
+      return;
+    }
+
+    this.state = StorageManager.register(name, handle, email, focus);
+    SoundFX.playSuccess();
+    this.renderAll();
+    this.switchView("hq");
+  },
+
+  continueAsGuest() {
+    this.state = StorageManager.login("Guest Candidate");
+    SoundFX.playSuccess();
+    this.renderAll();
+    this.switchView("hq");
+  },
+
+  logout() {
+    StorageManager.logout();
+    SoundFX.playClick();
+    this.renderTopBar();
+    this.switchView("login");
   },
 
   // -------------------------------------------------------------
@@ -114,6 +196,9 @@ const App = {
   },
 
   switchView(viewName) {
+    if (!StorageManager.isLoggedIn() && viewName !== "login") {
+      viewName = "login";
+    }
     this.activeView = viewName;
     document.querySelectorAll(".nav-tab").forEach(tab => {
       tab.classList.toggle("active", tab.getAttribute("data-view") === viewName);

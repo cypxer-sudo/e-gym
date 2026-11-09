@@ -3,8 +3,64 @@
 
 const STORAGE_KEY = "EGYM_MEMBER_STATE_V3";
 const MEMBER_ID_KEY = "EGYM_MEMBER_UUID";
+const SESSION_KEY = "EGYM_AUTH_SESSION";
 
 class StorageManager {
+  static isLoggedIn() {
+    return !!localStorage.getItem(SESSION_KEY);
+  }
+
+  static getSession() {
+    try {
+      const data = localStorage.getItem(SESSION_KEY);
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static login(identifier, password) {
+    const state = this.getState();
+    const cleanId = identifier.trim();
+    const handle = cleanId.startsWith("@") ? cleanId : "@" + cleanId.split("@")[0];
+    state.profile.handle = handle;
+    if (!state.profile.name || state.profile.name === "New Member" || state.profile.name === "Candidate") {
+      state.profile.name = cleanId.split("@")[0].replace(/[._-]/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    }
+    const session = {
+      identifier: cleanId,
+      loggedInAt: new Date().toISOString()
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    this.saveState(state);
+    return state;
+  }
+
+  static register(name, handle, email, focus) {
+    const cleanState = JSON.parse(JSON.stringify(INITIAL_MEMBER_STATE));
+    cleanState.profile.name = name.trim();
+    cleanState.profile.handle = handle.startsWith("@") ? handle.trim() : "@" + handle.trim();
+    cleanState.profile.bio = `Committed to developing every dimension. Focused on ${focus || 'deliberate execution'}.`;
+    
+    if (focus && cleanState.dimensionsRadar[focus.toLowerCase()] !== undefined) {
+      cleanState.dimensionsRadar[focus.toLowerCase()] = 65;
+    }
+
+    const session = {
+      name: cleanState.profile.name,
+      handle: cleanState.profile.handle,
+      email: email ? email.trim() : "",
+      loggedInAt: new Date().toISOString()
+    };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    this.saveState(cleanState);
+    return cleanState;
+  }
+
+  static logout() {
+    localStorage.removeItem(SESSION_KEY);
+  }
+
   static getMemberId() {
     let id = localStorage.getItem(MEMBER_ID_KEY);
     if (!id) {

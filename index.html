@@ -52,21 +52,107 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           Performance Record
         </button>
-        <button class="nav-tab" data-view="membership">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-          Membership
-        </button>
+        <!-- Membership tab temporarily disabled in navigation -->
       </nav>
 
-      <div class="user-quick-profile">
-        <span class="tier-pill" id="header-tier-pill" title="Click to view membership tiers">Member</span>
-        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Member Avatar" class="avatar-circle" id="header-avatar" title="View Development Record">
+      <div class="user-quick-profile" id="header-user-profile">
+        <div id="auth-logged-in-wrap" style="display: flex; align-items: center; gap: 0.75rem;">
+          <span class="tier-pill" id="header-tier-pill" onclick="App.switchView('membership')">Genesis Access</span>
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Member Avatar" class="avatar-circle" id="header-avatar" title="View Development Record" onclick="App.switchView('profile')">
+          <button class="topbar-btn" onclick="App.logout()" title="Sign Out of Session" style="color: var(--text-muted); font-size: 0.75rem;">
+            Sign Out
+          </button>
+        </div>
+        <div id="auth-logged-out-wrap" class="hidden">
+          <button class="btn btn-primary" style="padding: 0.4rem 0.9rem; font-size: 0.75rem;" onclick="App.switchView('login')">Candidate Access</button>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- Main View Container -->
   <main class="container app-body">
+
+    <!-- ========================================== -->
+    <!-- VIEW 0: LOGIN & REGISTRATION GATE          -->
+    <!-- ========================================== -->
+    <section id="view-login" class="view-section">
+      <div class="auth-wrapper">
+        <div class="auth-card">
+          <div class="auth-badge">E</div>
+          <h1 class="auth-title">E-GYM</h1>
+          <div class="auth-tagline">BECOME UNREAL • CANDIDATE ACCESS</div>
+
+          <div class="auth-tabs">
+            <button class="auth-tab-btn active" id="tab-btn-signin" onclick="App.switchAuthTab('signin')">Sign In</button>
+            <button class="auth-tab-btn" id="tab-btn-register" onclick="App.switchAuthTab('register')">Initiate (Register)</button>
+          </div>
+
+          <!-- Sign In Form -->
+          <form id="auth-form-signin" class="auth-form" onsubmit="event.preventDefault(); App.submitSignIn();">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Member Handle or Email</label>
+              <input type="text" id="login-identifier" class="form-input" placeholder="e.g. @initiate or alex@domain.com" required autocomplete="username">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Access Passcode</label>
+              <input type="password" id="login-password" class="form-input" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+
+            <div class="auth-btn-row">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Access Personal HQ</button>
+            </div>
+          </form>
+
+          <!-- Register Form -->
+          <form id="auth-form-register" class="auth-form hidden" onsubmit="event.preventDefault(); App.submitRegister();">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="reg-name" class="form-input" placeholder="e.g. Alex Vance" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Handle</label>
+              <input type="text" id="reg-handle" class="form-input" placeholder="e.g. @vance_builds" required>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Email (Optional)</label>
+              <input type="email" id="reg-email" class="form-input" placeholder="alex@domain.com">
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Primary Development Vector</label>
+              <select id="reg-focus" class="form-select">
+                <option value="execution">Execution & Discipline</option>
+                <option value="physical">Physical Resilience</option>
+                <option value="intellectual">Intellectual & Reading</option>
+                <option value="creative">Creative Expression</option>
+                <option value="professional">Professional Competence</option>
+              </select>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Create Passcode</label>
+              <input type="password" id="reg-password" class="form-input" placeholder="••••••••" required autocomplete="new-password">
+            </div>
+
+            <div class="auth-btn-row">
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Create Dossier & Enter</button>
+            </div>
+          </form>
+
+          <div class="guest-divider">
+            <span>OR FAST CANDIDATE ACCESS</span>
+          </div>
+
+          <button class="btn btn-secondary" style="width: 100%; font-size: 0.8rem;" onclick="App.continueAsGuest()">
+            Enter as Guest Candidate
+          </button>
+        </div>
+      </div>
+    </section>
 
     <!-- ========================================== -->
     <!-- VIEW 1: PERSONAL HQ (HOME)                -->
@@ -495,16 +581,29 @@
     </section>
 
     <!-- ========================================== -->
-    <!-- VIEW 5: MEMBERSHIP                        -->
+    <!-- VIEW 5: MEMBERSHIP (TEMPORARILY DISABLED) -->
     <!-- ========================================== -->
     <section id="view-membership" class="view-section">
-      <div class="membership-intro">
-        <h2>Institutional Membership</h2>
-        <p>Three tiers designed to accompany you as you graduate from habit experimentation into elite execution.</p>
-      </div>
-
-      <div class="tiers-grid" id="membership-tiers-grid">
-        <!-- Rendered via JS -->
+      <div class="membership-disabled-banner">
+        <span class="membership-disabled-badge">Institutional Access • Closed Beta</span>
+        <h2 style="font-family: var(--font-display); font-size: 2.2rem; font-weight: 800; color: #FFFFFF; margin-bottom: 0.75rem;">
+          Membership Billing Paused
+        </h2>
+        <p style="color: var(--text-secondary); font-size: 0.95rem; max-width: 580px; margin: 0 auto 1.75rem; line-height: 1.6;">
+          During the Genesis Phase, paid subscription tiers are temporarily suspended. All flagship challenges, reading roadmaps, and department tools are <strong>100% free and unlocked</strong> for all registered candidates.
+        </p>
+        <div style="background: var(--bg-card); border: 1px solid var(--border-gold); border-radius: var(--radius-lg); padding: 1.25rem; max-width: 440px; margin: 0 auto 2rem; display: flex; align-items: center; justify-content: space-around;">
+          <div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Current Tier</div>
+            <div style="font-size: 1.2rem; font-family: var(--font-display); font-weight: 700; color: var(--text-gold);">Genesis Pass</div>
+          </div>
+          <div style="height: 35px; border-left: 1px solid var(--border-subtle);"></div>
+          <div>
+            <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Tier Fee</div>
+            <div style="font-size: 1.2rem; font-family: var(--font-display); font-weight: 700; color: var(--accent-emerald);">₹0 (Free)</div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="App.switchView('hq')">Enter Personal HQ</button>
       </div>
     </section>
 
