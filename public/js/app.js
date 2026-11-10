@@ -283,7 +283,7 @@ const App = {
     } else if (viewName === "profile") {
       this.renderProfile();
     }
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo(0, 0);
     SoundFX.playClick();
   },
 

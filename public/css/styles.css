@@ -36,9 +36,9 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 30px rgba(212, 175, 55, 0.12);
+  --transition: color 0.14s ease, background-color 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease;
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 16px rgba(212, 175, 55, 0.1);
 }
 
 /* Reset & Base */
@@ -55,11 +55,21 @@ body {
   line-height: 1.6;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+/* Hardware-composited fixed background prevents scroll lag on laptops */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
   background-image: 
-    radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.05) 0%, transparent 40%),
-    radial-gradient(circle at 100% 50%, rgba(59, 130, 246, 0.03) 0%, transparent 40%),
-    radial-gradient(circle at 0% 80%, rgba(139, 92, 246, 0.03) 0%, transparent 40%);
-  background-attachment: fixed;
+    radial-gradient(circle at 50% 0%, rgba(212, 175, 55, 0.04) 0%, transparent 45%),
+    radial-gradient(circle at 100% 50%, rgba(59, 130, 246, 0.02) 0%, transparent 40%),
+    radial-gradient(circle at 0% 80%, rgba(139, 92, 246, 0.02) 0%, transparent 40%);
+  transform: translateZ(0);
 }
 
 a {
@@ -125,10 +135,11 @@ header.app-header {
   position: sticky;
   top: 0;
   z-index: 50;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  background: rgba(9, 11, 14, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgba(9, 11, 14, 0.9);
   border-bottom: 1px solid var(--border-subtle);
+  transform: translateZ(0);
 }
 
 .nav-wrapper {
@@ -255,16 +266,10 @@ main.app-body {
 
 .view-section {
   display: none;
-  animation: fadeIn 0.3s ease-out forwards;
 }
 
 .view-section.active-view {
   display: block;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Hero Section inside Personal HQ */
@@ -2308,11 +2313,7 @@ main.app-body {
 
 /* Micro-tactile button depressions & focus states */
 .btn, .topbar-btn, .nav-tab, .dept-tab-btn, .filter-btn, .timer-pill, .modal-close-btn, .admin-tab-btn {
-  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              background 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              color 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.16s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.14s ease, background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
@@ -2326,42 +2327,38 @@ main.app-body {
   outline-offset: 2px;
 }
 
-/* Apple-style smooth page view transition */
+/* Hardware-composited smooth page view transition (Zero GPU jank) */
 .view-section {
   display: none;
-  opacity: 0;
-  will-change: transform, opacity;
 }
 
 .view-section.active-view {
   display: block;
-  animation: viewFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: viewFadeIn 0.15s ease-out forwards;
 }
 
 @keyframes viewFadeIn {
   from {
     opacity: 0;
-    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
 /* Modal pop & entrance */
 .modal-overlay {
-  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
+  transition: opacity 0.18s ease-out, visibility 0.18s;
 }
 
 .modal-overlay.open .modal-dialog {
-  animation: modalScaleUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalScaleUp 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes modalScaleUp {
   from {
     opacity: 0;
-    transform: scale(0.96) translateY(8px);
+    transform: scale(0.97) translateY(4px);
   }
   to {
     opacity: 1;
@@ -2369,11 +2366,13 @@ main.app-body {
   }
 }
 
-/* Card hover elevations */
-.card-section, .stat-card, .challenge-card, .roadmap-card, .prompt-card {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+/* Highly efficient card hover states */
+.card-section, .challenge-card, .roadmap-card, .prompt-card {
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.stat-card {
+  transition: transform 0.15s ease, border-color 0.15s ease;
 }
 
 .card-section:hover, .challenge-card:hover, .roadmap-card:hover {
@@ -2382,23 +2381,21 @@ main.app-body {
 
 .stat-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.6);
 }
 
 /* Checkbox smooth completion */
 .custom-checkbox {
-  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: border-color 0.14s ease, background-color 0.14s ease;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
 .objective-item {
-  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+  transition: border-color 0.14s ease, background-color 0.14s ease;
 }
 
 .objective-item:hover {
   border-color: rgba(255, 255, 255, 0.12);
-  transform: translateX(2px);
 }
 
 .objective-item.completed {
