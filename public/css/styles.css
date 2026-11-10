@@ -2302,38 +2302,291 @@ main.app-body {
   gap: 1.25rem;
 }
 
-/* Responsive adjustments */
+/* ============================================================= */
+/* APPLE-INSPIRED MOTION DESIGN & POLISHED INTERACTION SYSTEM   */
+/* ============================================================= */
+
+/* Micro-tactile button depressions & focus states */
+.btn, .topbar-btn, .nav-tab, .dept-tab-btn, .filter-btn, .timer-pill, .modal-close-btn, .admin-tab-btn {
+  transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              background 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.16s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.btn:active, .topbar-btn:active, .filter-btn:active, .dept-tab-btn:active, .timer-pill:active, .admin-tab-btn:active {
+  transform: scale(0.975);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gold-primary);
+  outline-offset: 2px;
+}
+
+/* Apple-style smooth page view transition */
+.view-section {
+  display: none;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.view-section.active-view {
+  display: block;
+  animation: viewFadeIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes viewFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal pop & entrance */
+.modal-overlay {
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.2s;
+}
+
+.modal-overlay.open .modal-dialog {
+  animation: modalScaleUp 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Card hover elevations */
+.card-section, .stat-card, .challenge-card, .roadmap-card, .prompt-card {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-section:hover, .challenge-card:hover, .roadmap-card:hover {
+  border-color: rgba(212, 175, 55, 0.28);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -6px rgba(0, 0, 0, 0.6);
+}
+
+/* Checkbox smooth completion */
+.custom-checkbox {
+  transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.objective-item {
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+
+.objective-item:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateX(2px);
+}
+
+.objective-item.completed {
+  opacity: 0.6;
+}
+
+.objective-item.completed .objective-text {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+/* Accessibility: Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .view-section.active-view {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* ============================================================= */
+/* MOBILE BOTTOM NAVIGATION DOCK (FIRST-CLASS MOBILE EXPERIENCE) */
+/* ============================================================= */
+
+.mobile-bottom-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    background: rgba(9, 11, 15, 0.94);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.35rem 0.5rem calc(0.35rem + env(safe-area-inset-bottom, 0px)) 0.5rem;
+    justify-content: space-around;
+    align-items: center;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  .mobile-nav-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    min-height: 48px;
+    padding: 0.4rem 0.2rem;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.16s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .mobile-nav-btn svg {
+    transition: transform 0.16s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.16s;
+  }
+
+  .mobile-nav-btn.active {
+    color: var(--text-gold);
+    background: rgba(212, 175, 55, 0.08);
+  }
+
+  .mobile-nav-btn.active svg {
+    stroke: var(--text-gold);
+    transform: translateY(-1px) scale(1.08);
+  }
+
+  .mobile-nav-btn:active {
+    transform: scale(0.92);
+  }
+
+  /* Hide header desktop navigation on mobile */
+  .main-nav {
+    display: none !important;
+  }
+
+  /* Offset main body to prevent overlap with bottom dock */
+  main.app-body {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Sleek responsive header on mobile */
+  .nav-wrapper {
+    height: 3.75rem;
+  }
+
+  .logo-badge {
+    width: 2.1rem;
+    height: 2.1rem;
+    font-size: 0.95rem;
+  }
+
+  .brand-name {
+    font-size: 1.15rem;
+  }
+}
+
+/* ============================================================= */
+/* RESPONSIVE LAYOUT SYSTEM (320px - 1920px)                     */
+/* ============================================================= */
+
+/* Tablets & Small Desktops (769px - 1024px) */
+@media (max-width: 1024px) {
+  .hq-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .hq-hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1.25rem;
+  }
+
+  .hq-hero-actions {
+    width: 100%;
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .hq-hero-actions .btn {
+    flex: 1;
+  }
+
+  .community-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .admin-rank-inputs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mid-range Tablets & Landscape Mobile (max-width: 900px) */
 @media (max-width: 900px) {
   .rank-banner-card {
     grid-template-columns: 1fr;
     gap: 1.25rem;
     padding: 1.25rem;
   }
+
   .rank-banner-left {
     border-right: none;
     border-bottom: 1px solid var(--border-subtle);
     padding-right: 0;
     padding-bottom: 1.25rem;
   }
+
   .standing-overview-grid {
     grid-template-columns: 1fr;
     text-align: center;
   }
+
   .standing-metrics-pills {
     justify-content: center;
   }
+
   .rank-tier-card {
     grid-template-columns: 60px 1fr;
     gap: 1rem;
   }
+
   .rank-card-criteria-box, .rank-card-perks {
     grid-column: 1 / -1;
   }
-  .admin-rank-inputs-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .community-grid {
-    grid-template-columns: 1fr !important;
+
+  .writing-studio-wrap {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -2348,17 +2601,7 @@ main.app-body {
     padding: 0 0.85rem;
   }
 
-  .main-nav {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    white-space: nowrap;
-    padding-bottom: 0.35rem;
-    scrollbar-width: none;
-  }
-  .main-nav::-webkit-scrollbar {
-    display: none;
-  }
-
+  /* Min touch target size across all interactive controls */
   .nav-tab {
     flex-shrink: 0;
     min-height: 44px;
@@ -2374,6 +2617,12 @@ main.app-body {
   .btn {
     min-height: 44px;
     padding: 0.65rem 1.15rem;
+  }
+
+  /* Form inputs fit nicely without causing auto-zoom on mobile */
+  .form-input, .form-textarea, .form-select {
+    font-size: 16px;
+    min-height: 44px;
   }
 
   .stats-bar {
@@ -2399,71 +2648,198 @@ main.app-body {
     justify-content: center;
   }
 
+  /* Modals on Mobile: fluid width, dynamic height, keyboard-safe */
   .modal-dialog {
     width: 94vw !important;
     max-width: 94vw !important;
+    max-height: calc(100dvh - 2rem) !important;
     padding: 1.25rem !important;
     margin: 1rem auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .dept-nav-pills {
+  .modal-close-btn {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-height: 44px;
+    min-width: 44px;
+    top: 0.75rem;
+    right: 0.75rem;
+  }
+
+  /* Department sub-nav horizontal pill scroll */
+  .dept-nav, .dept-nav-pills {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     white-space: nowrap;
     display: flex;
     gap: 0.5rem;
     scrollbar-width: none;
+    padding-bottom: 0.35rem;
   }
-  .dept-nav-pills::-webkit-scrollbar {
+
+  .dept-nav::-webkit-scrollbar, .dept-nav-pills::-webkit-scrollbar {
     display: none;
   }
 
-  .dept-nav-btn {
+  .dept-tab-btn, .dept-nav-btn {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 0.55rem 0.95rem;
+    font-size: 0.8rem;
+  }
+
+  /* Filter buttons horizontal scroll */
+  .filter-pills {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    display: flex;
+    gap: 0.4rem;
+    scrollbar-width: none;
+    padding-bottom: 0.35rem;
+  }
+
+  .filter-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-btn {
     flex-shrink: 0;
     min-height: 44px;
   }
+
+  /* Challenges grid fluid card width */
+  .challenges-grid {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  /* Reading academy & fitness logger stack */
+  #dept-sub-mind > div[style*="grid-template-columns"],
+  #dept-sub-body > div[style*="grid-template-columns"],
+  #dept-sub-growth > div[style*="grid-template-columns"],
+  #view-profile > div[style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+    gap: 1.25rem !important;
+  }
+
+  /* Radar canvas responsive container */
+  .radar-box canvas {
+    max-width: 100%;
+    height: auto !important;
+  }
+
+  /* Timer display responsive sizing */
+  .timer-display {
+    font-size: clamp(2.8rem, 12vw, 4rem) !important;
+  }
+
+  .timer-preset-pills {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .timer-pill {
+    min-height: 44px;
+    padding: 0.5rem 0.85rem;
+    font-size: 0.8rem;
+  }
+
+  .timer-controls {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.75rem;
+  }
+
+  .timer-controls .btn {
+    width: 100%;
+  }
+
+  /* Assessment banner on mobile */
+  .hq-assessment-banner {
+    flex-direction: column;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+    padding: 1.15rem !important;
+  }
+
+  .hq-assessment-banner button {
+    width: 100%;
+  }
 }
 
+/* Ultra-compact Mobile Screens (320px - 380px) */
 @media (max-width: 380px) {
+  .container {
+    padding: 0 0.65rem;
+  }
+
   .stats-bar {
     grid-template-columns: 1fr;
+    gap: 0.6rem;
   }
 
   .rank-banner-title {
-    font-size: 1.4rem;
+    font-size: 1.35rem;
   }
 
   .brand-strapline {
     display: none;
   }
+
+  .brand-topbar {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.65rem;
+  }
+
+  .brand-topbar .motto {
+    font-size: 0.65rem;
+    letter-spacing: 0.06em;
+  }
+
+  .btn {
+    font-size: 0.8rem;
+    padding: 0.6rem 0.9rem;
+  }
+
+  .hq-welcome h1 {
+    font-size: 1.5rem;
+  }
 }
 
-/* Phase 2: Priority Badges, Assessment Banner & Evening Reflection */
+/* ============================================================= */
+/* PHASE 2 & 3: PRIORITY BADGES, ASSESSMENT & SHUTDOWN SYSTEM    */
+/* ============================================================= */
+
 .badge-priority {
   font-family: var(--font-mono);
   font-size: 0.65rem;
   font-weight: 700;
-  padding: 0.15rem 0.45rem;
+  padding: 0.18rem 0.5rem;
   border-radius: var(--radius-sm);
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
 }
 
 .priority-critical {
-  background: rgba(212, 175, 55, 0.15);
+  background: rgba(212, 175, 55, 0.16);
   border: 1px solid var(--border-gold);
   color: var(--text-gold);
+  box-shadow: 0 0 8px rgba(212, 175, 55, 0.2);
 }
 
 .priority-high {
-  background: rgba(249, 115, 22, 0.15);
-  border: 1px solid rgba(249, 115, 22, 0.4);
+  background: rgba(249, 115, 22, 0.16);
+  border: 1px solid rgba(249, 115, 22, 0.45);
   color: #FB923C;
 }
 
 .priority-medium {
-  background: rgba(59, 130, 246, 0.12);
-  border: 1px solid rgba(59, 130, 246, 0.3);
+  background: rgba(59, 130, 246, 0.14);
+  border: 1px solid rgba(59, 130, 246, 0.35);
   color: var(--accent-blue);
 }
 
@@ -2474,24 +2850,29 @@ main.app-body {
 }
 
 .hq-assessment-banner {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .hq-assessment-banner:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.15);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.18);
   border-color: var(--gold-light);
 }
 
 .assessment-opt-card {
-  transition: all 0.2s ease;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
 }
 
 .assessment-opt-card:hover {
   border-color: var(--border-gold) !important;
   transform: translateX(4px);
+  background: rgba(212, 175, 55, 0.06);
 }
 
 .assessment-opt-card.selected-opt {
-  box-shadow: 0 0 12px rgba(212, 175, 55, 0.2);
+  box-shadow: 0 0 16px rgba(212, 175, 55, 0.25);
+  border-color: var(--gold-primary) !important;
 }

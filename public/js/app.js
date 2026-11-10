@@ -236,6 +236,25 @@ const App = {
         this.switchDeptSub(sub);
       });
     });
+
+    // Global keyboard listener for modal dismissal (ESC key)
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" || e.keyCode === 27) {
+        document.querySelectorAll(".modal-overlay.open").forEach(modal => {
+          modal.classList.remove("open");
+        });
+      }
+    });
+
+    // Backdrop click dismiss for modal overlays
+    document.querySelectorAll(".modal-overlay").forEach(overlay => {
+      overlay.addEventListener("click", (e) => {
+        if (e.target === overlay) {
+          overlay.classList.remove("open");
+          SoundFX.playClick();
+        }
+      });
+    });
   },
 
   switchView(viewName) {
@@ -312,7 +331,22 @@ const App = {
 
     if (objListEl) {
       if (todayObjectives.length === 0) {
-        objListEl.innerHTML = `<div style="text-align:center; padding: 2rem; color: var(--text-muted);">No objectives logged for today. Click "+ Add New" or enroll in a challenge!</div>`;
+        objListEl.innerHTML = `
+          <div class="empty-state-card" style="text-align:center; padding: 2.25rem 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px dashed var(--border-subtle); border-radius: var(--radius-lg);">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: rgba(212, 175, 55, 0.1); border: 1px solid var(--border-gold); display: flex; align-items: center; justify-content: center; margin: 0 auto 0.85rem; color: var(--text-gold); font-size: 1.2rem;">
+              ⚡
+            </div>
+            <div style="font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; color: #FFFFFF; margin-bottom: 0.35rem;">
+              Command Your Day
+            </div>
+            <p style="font-size: 0.82rem; color: var(--text-secondary); max-width: 380px; margin: 0 auto 1.25rem; line-height: 1.5;">
+              Zero zero-days standard. Set your critical focus for today or commit to an institutional challenge.
+            </p>
+            <button class="btn btn-outline-gold" style="font-size: 0.8rem; padding: 0.45rem 1.15rem;" onclick="App.openAddObjectiveModal()">
+              + Set Today's #1 Objective
+            </button>
+          </div>
+        `;
       } else {
         objListEl.innerHTML = todayObjectives.map(obj => {
           const dimClass = `dim-${obj.dimension || 'execution'}`;
