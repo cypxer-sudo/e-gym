@@ -54,9 +54,59 @@ async function getAuthenticatedMember(request, env) {
   }
 }
 
+let schemaEnsured = false;
+async function ensureD1Schema(db) {
+  if (!db || schemaEnsured) return;
+  schemaEnsured = true;
+  const migrations = [
+    "ALTER TABLE members ADD COLUMN current_rank_id TEXT DEFAULT 'recruit'",
+    "ALTER TABLE members ADD COLUMN password_hash TEXT",
+    "ALTER TABLE members ADD COLUMN is_admin INTEGER DEFAULT 0",
+    "ALTER TABLE members ADD COLUMN privacy_mode TEXT DEFAULT 'private'",
+    "ALTER TABLE daily_objectives ADD COLUMN priority TEXT DEFAULT 'medium'",
+    "ALTER TABLE daily_objectives ADD COLUMN due_time TEXT DEFAULT 'Today'",
+    "ALTER TABLE daily_objectives ADD COLUMN postponed_count INTEGER DEFAULT 0",
+    `CREATE TABLE IF NOT EXISTS member_sessions (
+      token TEXT PRIMARY KEY,
+      member_id TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      expires_at TIMESTAMP NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS evening_reflections (
+      id TEXT PRIMARY KEY,
+      member_id TEXT NOT NULL,
+      reflection_date DATE NOT NULL,
+      win_summary TEXT NOT NULL,
+      friction_point TEXT NOT NULL,
+      target_tomorrow TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE TABLE IF NOT EXISTS member_assessments (
+      id TEXT PRIMARY KEY,
+      member_id TEXT NOT NULL,
+      scores_json TEXT NOT NULL,
+      weakest_dimension TEXT,
+      strongest_dimension TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`
+  ];
+  for (const sql of migrations) {
+    try {
+      await db.prepare(sql).run();
+    } catch (e) {
+      // Ignored: column/table already exists
+    }
+  }
+}
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
+
+    // Auto-ensure D1 database schema migrations
+    if (env && env.DB) {
+      await ensureD1Schema(env.DB);
+    }
 
     // Handle CORS preflight
     if (request.method === "OPTIONS") {
